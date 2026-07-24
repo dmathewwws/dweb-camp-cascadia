@@ -24,8 +24,7 @@ export function getWorkspaceName(): string {
 
 /** "my-cool-space" → "My Cool Space" — the display-name convention for the workspace. */
 export function toTitleCase(kebab: string): string {
-  return kebab
-    .split('-')
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(' ')
+  const words = kebab.split('-').filter(Boolean)
+  if (words.length === 0) return kebab
+  return words.map((word) => word[0].toUpperCase() + word.slice(1)).join(' ')
 }

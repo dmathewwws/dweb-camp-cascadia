@@ -1,18 +1,25 @@
 # Hosting a mini app at a subpath
 
-Each mini app is an **independent Cloudflare Worker** (its own repo, its own D1 + Durable
-Object) that claims a path on the shared hostname. This host repo serves the landing grid
-at `/` and a catch-all for everything else; a child app on `/<slug>` overrides the
+Each mini app is an **independent Cloudflare Worker** (its own D1 + Durable Object) that
+claims a path on the shared hostname. Apps normally live at `apps/<slug>` in this
+workspace, scaffolded by `pnpm new-app <slug>`; an app in an external repo can join the
+domain too as long as it follows the same contract. The host serves the landing grid at
+`/` and a catch-all for everything else; a child app on `/<slug>` overrides the
 catch-all because Cloudflare resolves the **most-specific route first**.
 
-This is the contract a starter-based app must follow to live at `https://<domain>/<slug>`.
-(The current single-app starter does **not** follow it out of the box — `base` is unset,
-the router `basename` is `/`, and API calls are absolute `/api/...`. Use this as the
-conversion checklist.)
+The doc has two parts:
+
+- **Part A — the subpath contract.** Apps scaffolded by `pnpm new-app` already comply
+  with all of it; read it as reference, or as a conversion checklist for an external
+  app that wasn't built from the template.
+- **Part B — registering with the host console.** Always manual, after the app's first
+  deploy. This is the canonical checklist — other docs link here.
 
 Throughout, replace `guestbook` with your app's slug.
 
-## 1. Vite base path
+## Part A — The subpath contract
+
+### 1. Vite base path
 
 `client/vite.config.ts`:
 
@@ -23,7 +30,16 @@ export default defineConfig({
 })
 ```
 
-## 2. React Router basename
+In dev, the proxy key must carry the prefix too — the client requests
+`/guestbook/api/...`:
+
+```ts
+proxy: {
+  '/guestbook/api': { target: 'http://localhost:8788', changeOrigin: true, ws: true },
+}
+```
+
+### 2. React Router basename
 
 `client/src/routes/index.tsx`:
 
@@ -36,7 +52,7 @@ export const router = createBrowserRouter(
 
 Use relative `<Link>`s as usual — the basename is applied automatically.
 
-## 3. Client API + WebSocket calls must be base-relative
+### 3. Client API + WebSocket calls must be base-relative
 
 The child Worker is reached at `/guestbook/...`, so API calls must include the base.
 `import.meta.env.BASE_URL` is `'/guestbook/'` (note the trailing slash):
@@ -51,7 +67,7 @@ const ws = new WebSocket(`${proto}//${location.host}${import.meta.env.BASE_URL}a
 // -> wss://<domain>/guestbook/api/ws
 ```
 
-## 4. Server (Hono) must account for the path prefix
+### 4. Server (Hono) must account for the path prefix
 
 The Worker is bound to `/guestbook*`, so it receives the full path including the prefix.
 Mount the whole app under the base path so your existing `/api/...` handlers match:
@@ -61,7 +77,10 @@ Mount the whole app under the base path so your existing `/api/...` handlers mat
 const app = new Hono<{ Bindings: Env }>().basePath('/guestbook')
 ```
 
-## 5. Alchemy routes (two patterns) + own infrastructure
+(Consequence in dev: the worker 404s at a bare `/api/...` — always go through the
+prefixed path, or the Vite proxy.)
+
+### 5. Alchemy routes (two patterns) + own infrastructure
 
 In the child app's `alchemy.run.ts`, bind **both** the bare path and the subtree, and keep
 the SPA fallback. Give the app its **own** D1 and Durable Object (full isolation):
@@ -80,28 +99,83 @@ export const worker = await Worker('worker', {
 ```
 
 The two patterns matter: `/guestbook` (no trailing slash, the entry link) and
-`/guestbook/*` (assets + in-app routes).
+`/guestbook/*` (assets + in-app routes). Template-scaffolded apps derive these from
+`ALLOWED_ORIGIN` automatically once it is set to the real domain
+(`pnpm setup-project --allowed-origin https://your.domain`).
 
-## 6. Manifest
+### 6. Manifest
 
-Give the app a unique `name` in `client/public/local-first-auth-manifest.json`.
+Give the app a unique `name` in `client/public/local-first-auth-manifest.json`
+(scaffolded apps get their Title Case slug).
 
-## 7. Register with the host
+## Part B — Register with the host console
 
-Add an entry to **this repo's** `client/src/apps.ts` and redeploy the host so the app
-shows up in the grid:
+Do this after the app's **first deploy** (you need its real prod D1 UUID). Four edits,
+all in `apps/console`, then redeploy the host:
+
+### 1. Get the app's prod D1 UUID
+
+```bash
+pnpm --filter @<workspace>/guestbook exec wrangler d1 list
+# note the uuid of <workspace>-guestbook-mini-app-prod-db
+```
+
+### 2. Landing-grid card — `client/src/apps.ts`
 
 ```ts
 { slug: 'guestbook', name: 'Guestbook', description: '…', path: '/guestbook', icon: '📖', accent: 'from-rose-400 to-orange-300' }
 ```
 
-## 8. Admin console — host binds each app's D1 directly
+`path` MUST be `/<slug>` with **no trailing slash** — it's a real cross-document link;
+the Worker's `auto-trailing-slash` handling redirects to `/<slug>/`.
 
-The host's Settings → Admin section lets an operator manage users across **every** managed
-mini app (grant/revoke admin, block, remove). Rather than each app exposing an HTTP admin
-surface, the **host Worker binds each app's D1 database directly** and writes
-`users.is_admin` itself. This is simpler to operate (no per-app admin endpoints to build)
-at the cost of one hard requirement:
+### 3. Managed-app registry — `shared/src/apps.ts` (required, not optional)
+
+Add the entry to `MANAGED_APPS` **and** extend `ChildBindingKey` — leaving the type as
+`never` while adding an entry is a compile error:
+
+```ts
+export type ChildBindingKey = 'DB_GUESTBOOK'
+
+export const MANAGED_APPS: ManagedApp[] = [
+  {
+    slug: 'guestbook',
+    bindingKey: 'DB_GUESTBOOK',
+    dbName: '<workspace>-guestbook-mini-app-prod-db',
+    databaseId: '<uuid from step 1>',
+  },
+]
+```
+
+`alchemy.run.ts` and `server/src/admin-apps.ts` both derive from this registry — the
+UUID is the only sync point; nothing else is edited by hand.
+
+### 4. Dev D1 binding — `wrangler.toml`
+
+```toml
+[[d1_databases]]
+binding = "DB_GUESTBOOK"
+database_name = "<workspace>-guestbook-mini-app-dev-db"
+database_id = "guestbook-local"
+```
+
+Under `wrangler dev --local` the `database_id` is just a local storage key — any unique
+string works; the console gets its own empty local copy of the child DB, not the
+child's live dev data.
+
+### 5. Redeploy the host
+
+```bash
+pnpm --filter @<workspace>/console run deploy:cloudflare
+```
+
+## Admin console requirements for the child app
+
+The host's Settings → Admin section lets an operator manage users across **every**
+managed mini app (grant/revoke admin, block, remove). Rather than each app exposing an
+HTTP admin surface, the **host Worker binds each app's D1 database directly** (by UUID,
+via `MANAGED_APPS`) and writes `users.is_admin` itself. This is simpler to operate at
+the cost of one hard requirement:
 
 > **All apps must live in the same pinned Cloudflare account** (`CLOUDFLARE_ACCOUNT_ID`,
 > see [`docs/domain-setup.md`](./domain-setup.md) §3). D1 bindings are account-scoped, so a
@@ -110,13 +184,10 @@ at the cost of one hard requirement:
 What this means for a child app:
 
 - **Keep the standard `users` table** with a `did` primary key and an `is_admin` column
-  (the starter schema already has this). Grant/revoke/remove/list need no change.
-- **Block needs a `blocked` column.** The starter schema does **not** ship one. If you want
-  the console's "Block" action to work for your app, add a `blocked` integer column to your
-  `users` table; otherwise Block returns an error (the other actions still work).
-- **Note your D1 database name.** The host references it by name. After deploying, run
-  `pnpm wrangler d1 list` and give the name to whoever maintains the host so they can wire
-  it in `alchemy.run.ts`, `wrangler.toml`, and `server/src/admin-apps.ts`.
+  (the template schema has this). Grant/revoke/remove/list need no change.
+- **Block needs a `blocked` column.** Template-scaffolded apps ship it. An external app
+  that lacks it will see the console's "Block" action return an error (the other
+  actions still work).
 
 Authorization lives entirely on the host: it verifies the operator's JWT with
 `decodeAndVerifyJWT` and checks the issuer DID against its own `is_admin` allowlist.

@@ -24,10 +24,14 @@
  *
  * The *rename* deliberately never touches `templates/`: the vendored starter keeps
  * its generic `@starter/*` names, and new-app.ts rescopes them at copy time using
- * whatever the workspace is called then.
+ * whatever the workspace is called then. That also means the ordering rule: run
+ * setup-project BEFORE `pnpm new-app` — scaffolded apps bake in the workspace name.
  *
- * What it deliberately does NOT touch: `wrangler.toml` (ALLOWED_ORIGIN is unset in
- * dev on purpose, so the audience check is skipped) and the dev D1 database id.
+ * It also runs the host console's local D1 migrations (fully local via
+ * getPlatformProxy — no Cloudflare auth; the dev database_id is just a local
+ * storage key). It does NOT touch `wrangler.toml` vars (ALLOWED_ORIGIN is unset in
+ * dev on purpose, so the audience check is skipped). It ends with a short
+ * checklist of only the steps it could not do for you.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -122,7 +126,10 @@ if (renameNeeded) {
 }
 
 if (!renameNeeded && !originValue && !githubUrl) {
-  console.log(`\n✅ Project is already named "${next}" — nothing to do.\n`)
+  console.log(`\n✅ Project is already named "${next}" — nothing to rename.`)
+  // Still make sure the console's local D1 is migrated (idempotent, no auth) so a
+  // fresh clone whose name already matches ends up runnable too.
+  report([], migrateConsoleDb())
   process.exit(0)
 }
 
@@ -224,7 +231,9 @@ function setInAppFiles(
   return changed
 }
 
-const ORIGIN_LINE_RE = /^(\s*ALLOWED_ORIGIN:\s*)(['"])[^'"\n]*\2/m
+// Matches both forms: the console's inline binding (`ALLOWED_ORIGIN: '…',`) and
+// the template's hoisted const (`const ALLOWED_ORIGIN = '…'`).
+const ORIGIN_LINE_RE = /^(\s*(?:const\s+)?ALLOWED_ORIGIN\s*[:=]\s*)(['"])[^'"\n]*\2/m
 const GITHUB_HREF_RE = /href="https:\/\/github\.com\/[^"]*"/
 
 let originChanged = 0
@@ -261,7 +270,63 @@ if (renameNeeded) {
   }
 }
 
+// ── console D1 migrations (fully local — no Cloudflare auth needed) ─────────
+function migrateConsoleDb(): boolean {
+  console.log('\n🗄  Migrating the host console’s local D1…\n')
+  try {
+    execFileSync('pnpm', ['run', 'db:run-migrations'], {
+      cwd: path.join(REPO_ROOT, 'apps', 'console'),
+      stdio: 'inherit',
+    })
+    return true
+  } catch {
+    console.warn('\n⚠ Console migrations failed — see the checklist below.\n')
+    return false
+  }
+}
+
 // ── report ──────────────────────────────────────────────────────────────────
+/** Done-lines first, then a checklist of only the steps this run couldn't do. */
+function report(done: string[], migrated: boolean): void {
+  const ws = getWorkspaceName()
+  const steps: string[] = []
+
+  if (!migrated) {
+    steps.push(`Migrate the console's local D1:\n   pnpm --filter @${ws}/console run db:run-migrations`)
+  }
+  // Gate on file contents, not this run's flags, so re-runs stay accurate.
+  const consoleAlchemy = path.join(REPO_ROOT, 'apps', 'console', 'alchemy.run.ts')
+  const originIsPlaceholder =
+    fs.existsSync(consoleAlchemy) && fs.readFileSync(consoleAlchemy, 'utf8').includes('your-domain.example')
+  if (originIsPlaceholder) {
+    steps.push(
+      'Once you have a domain, set the production origin everywhere at once:\n' +
+        '   pnpm setup-project --allowed-origin https://your.domain',
+    )
+  }
+  if (!githubUrl) {
+    steps.push(
+      'Point the footer links at your fork:\n' +
+        '   pnpm setup-project --github-url https://github.com/you/your-repo',
+    )
+  }
+  steps.push('On GitHub: Settings → uncheck "Template repository" on your copy.')
+  steps.push(
+    `Try it: pnpm dev:console\n` +
+      `   (sign in without a phone: pnpm --filter @${ws}/console run dev:simulator)`,
+  )
+  steps.push(
+    'Scaffold your first mini app: pnpm new-app <slug>\n' +
+      '   (always run setup-project BEFORE new-app — apps bake in the workspace name)',
+  )
+
+  console.log(`\n${[...done, '✅ Project setup complete'].join('\n')}\n`)
+  console.log(`Next steps:\n${steps.map((s, i) => `  ${i + 1}. ${s}`).join('\n')}\n`)
+  console.log('Deploying? See "Deployment" in README.md.\n')
+}
+
+const migrated = migrateConsoleDb()
+
 const done: string[] = []
 if (renameNeeded) done.push(`✅ Project renamed to "${next}"`)
 if (originValue) {
@@ -278,7 +343,6 @@ if (githubUrl) {
       : `✅ Footer GitHub link already ${githubUrl}`,
   )
 }
+if (migrated) done.push('✅ Host console local D1 migrated')
 
-done.push('✅ Project setup complete')
-
-console.log(`\n${done.join('\n')}\n`)
+report(done, migrated)

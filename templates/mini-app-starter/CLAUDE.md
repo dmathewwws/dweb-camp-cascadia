@@ -1,10 +1,15 @@
-# CLAUDE.md for Mini App Starter
+# CLAUDE.md for __SLUG_TITLE__
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this app.
 
 ## Project Overview
 
-A starter template for building mini apps for you and your friends. Uses Local First Auth spec for user signup and authentication, SQLite database, WebSocket for real-time updates, REST API for backend endpoints.
+A mini app living at `apps/__SLUG__` inside a multi-app workspace, served under
+`/__SLUG__/` on the shared domain (Vite `base`, React Router `basename`, and Hono
+`basePath('/__SLUG__')` are already wired — client API calls are
+`import.meta.env.BASE_URL`-relative). Uses Local First Auth spec for user signup and
+authentication, SQLite database, WebSocket for real-time updates, REST API for backend
+endpoints.
 
 ### Project Structure
 
@@ -58,14 +63,14 @@ This is a pnpm workspace monorepo with three packages:
 
 #### Root
 
-- `/docs/` - Documentation
+- `/docs/` - App-specific documentation
+  - `admin-setup.md` - Admin setup instructions
+  - `secrets.md` - The canonical secrets/env-var convention: three buckets, the `[secrets]` gate, `alchemy.secret.env` bindings
+- `../../docs/` - Workspace-shared reference docs
   - `local-first-auth-spec.md` - Local First Auth Specification
   - `mini-app-examples.md` - Reference examples and links to other mini apps
-  - `admin-setup.md` - Admin setup instructions
   - `port-troubleshooting.md` - Port troubleshooting instructions
-  - `secrets.md` - The canonical secrets/env-var convention: three buckets, the `[secrets]` gate, `alchemy.secret.env` bindings
 - `/scripts/` - Helper scripts
-  - `setup.ts` - Project setup script (renames template to your app name)
   - `build-client-if-missing.ts` - Builds client if dist doesn't exist (runs before dev via predev hook)
   - `run-dev-migrations.ts` - Database migration script for local development
 - `alchemy.run.ts` - Alchemy deployment configuration for Cloudflare Workers
@@ -97,14 +102,6 @@ pnpm run build:client     # Build only client package
 
 ---
 
-## Project Setup (Claude: Follow These Instructions)
-
-**When to run these steps:** When the user asks to "set up", "initialize", or "rename" this project.
-
-Run: `pnpm setup-project {app-name}` (defaults to current directory name). See [Project Setup docs](./docs/project-setup.md) for details.
-
----
-
 ## Architecture
 
 ### Authentication
@@ -117,7 +114,7 @@ We use the library `local-first-auth` to easily add auth and a simple onboarding
 3. The `window.localFirstAuth` API is injected into the page
 4. Mini app calls `getProfileDetails()` to access the user's profile details
 
-See `/docs/local-first-auth-spec.md` for the full specification.
+See `../../docs/local-first-auth-spec.md` for the full specification.
 
 #### Local First Auth Simulator
 
@@ -247,16 +244,16 @@ Use the Wrangler CLI to run SQL queries against D1 databases.
 
 **Development (Local D1):**
 ```bash
-pnpm wrangler d1 execute meetup-cloudflare-dev-db --local --command "SELECT * FROM users;"
+pnpm wrangler d1 execute __APP_NAME__-dev-db --local --command "SELECT * FROM users;"
 ```
 
 **Production (Remote D1):**
 ```bash
-# Find the database name (format: meetup-irl-<stage>-db)
+# Find the database name (format: __APP_NAME__-<stage>-db)
 pnpm wrangler d1 list
 
 # Run a query
-pnpm wrangler d1 execute meetup-irl-prod-db --remote --command "SELECT * FROM users;"
+pnpm wrangler d1 execute __APP_NAME__-prod-db --remote --command "SELECT * FROM users;"
 ```
 
 Or log in to the Cloudflare dashboard, go to the D1 database, and run SQL queries directly.
@@ -333,4 +330,9 @@ No manual migration steps needed - everything is handled by `alchemy.run.ts` con
 - Check TypeScript errors: `pnpm run build`
 
 **Port Already in Use (8787):**
-See [Port Troubleshooting](./docs/port-troubleshooting.md)
+See [Port Troubleshooting](../../docs/port-troubleshooting.md)
+
+**API 404s in dev when hitting the worker directly:**
+The server mounts everything under the subpath (`basePath('/__SLUG__')`), so the API
+lives at `http://localhost:<worker-port>/__SLUG__/api/...` — a bare `/api/...` request
+returns 404. The Vite dev server proxies `/__SLUG__/api` to the worker for you.

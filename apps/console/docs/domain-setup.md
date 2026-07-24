@@ -59,10 +59,11 @@ apps bind more-specific routes (`example.com/<slug>/*`) that must win over this 
 
 ## 5. Deploy child mini apps
 
-Each mini app is a separate repo/Worker that binds its own, more-specific routes
-(`example.com/<slug>` and `example.com/<slug>/*`). Because most-specific wins, those
-override the host's `example.com/*` automatically — no change to the host is needed at
-request time. See [hosting-a-mini-app.md](./hosting-a-mini-app.md).
+Each mini app is a separate Worker (living at `apps/<slug>` in this workspace) that
+binds its own, more-specific routes (`example.com/<slug>` and `example.com/<slug>/*`).
+Because most-specific wins, those override the host's `example.com/*` automatically —
+no change to the host is needed at request time.
 
-To make an app appear in the landing grid, also add an entry to
-`client/src/apps.ts` and redeploy the host.
+To make an app appear in the landing grid and the admin console, register it per
+**"Register with the host console"** in
+[hosting-a-mini-app.md](./hosting-a-mini-app.md) and redeploy the host.

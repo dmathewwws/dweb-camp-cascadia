@@ -1,11 +1,12 @@
 /**
  * Alchemy configuration for the multi-app HOST.
  *
- * This repo is the catch-all Worker: it serves the landing-grid SPA and an SPA
+ * This app is the catch-all Worker: it serves the landing-grid SPA and an SPA
  * fallback for any path not claimed by a more-specific child app Worker. Child
- * mini apps live in their own repos, are deployed independently, and bind their
- * own route patterns (`<domain>/<slug>` + `<domain>/<slug>/*`). Cloudflare resolves
- * the most-specific route first, so child apps automatically override this catch-all.
+ * mini apps live at `apps/<slug>` in this workspace, are deployed independently, and
+ * bind their own route patterns (`<domain>/<slug>` + `<domain>/<slug>/*`). Cloudflare
+ * resolves the most-specific route first, so child apps automatically override this
+ * catch-all.
  *
  * Path-based routes only work on a Cloudflare zone (a custom domain), NOT on
  * *.workers.dev. This script always deploys to a workers.dev URL via `url: true`; the

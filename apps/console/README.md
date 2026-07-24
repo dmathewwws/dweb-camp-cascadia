@@ -10,9 +10,10 @@ Cloudflare Worker that:
 - exposes an authed **admin console** (Settings → Admin) for managing users across every
   mini app.
 
-Each mini app is an **independent Worker** — scaffolded into `apps/<slug>` with
-`pnpm new-app <slug>`, or living in its own repo. This makes it easy to code, deploy and
-manage each app separately. Each app is bound to `<domain>/<slug>/*`.
+Each mini app is an **independent Worker** — scaffolded into `apps/<slug>` in this
+workspace with `pnpm new-app <slug>` (or, less commonly, living in an external repo).
+This makes it easy to code, deploy and manage each app separately. Each app is bound to
+`<domain>/<slug>/*`.
 
 ## How it works
 
@@ -59,14 +60,12 @@ pnpm dev:simulator      # ...or start with a Local First Auth test user
 
 ## Adding a mini app to the grid
 
-1. **Deploy the child app Worker** with routes for its slug, following the contract in
-   [`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md) (Vite base path, router
-   basename, base-relative API calls, two Alchemy route patterns).
-2. **Add an entry to `client/src/apps.ts`** so it shows up in the landing grid.
-3. **(Optional) Register it as managed** — if operators should manage its users from the
-   admin console, add it to `MANAGED_APPS` in `shared/src/apps.ts` (and the matching dev
-   binding in `wrangler.toml`). See [`docs/admin-setup.md`](./docs/admin-setup.md).
-4. **Redeploy the host.**
+Follow the canonical checklist — **"Register with the host console"** in
+[`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md). In short: deploy the
+child app once, then add its card to `client/src/apps.ts`, add it to `MANAGED_APPS`
+**and** `ChildBindingKey` in `shared/src/apps.ts` (required together — one without the
+other is a compile error), add the `DB_<SLUG>` dev binding in `wrangler.toml`, and
+redeploy the host.
 
 ## Deployment
 
@@ -75,7 +74,8 @@ The host deploys to Cloudflare with [Alchemy](https://alchemy.run) (config in
 [Alchemy CLI docs](https://alchemy.run/docs/cli/configuration)):
 
 ```bash
-pnpm alchemy configure
+cp .env.example .env         # fill in CLOUDFLARE_ACCOUNT_ID + ALCHEMY_STATE_TOKEN
+pnpm alchemy configure       # from this directory (alchemy is a devDep here)
 pnpm run deploy:cloudflare   # build + alchemy deploy
 ```
 

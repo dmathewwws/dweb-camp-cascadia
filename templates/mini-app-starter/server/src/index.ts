@@ -14,7 +14,9 @@ import { createDb } from './db/client'
 import * as UserModel from './db/models/users'
 import { decodeAndVerifyJWT } from '@starter/shared'
 
-const app = new Hono<{ Bindings: Env }>()
+// The app is served under /<slug>/ on the shared domain; basePath keeps every
+// handler's route written as /api/* while matching /<slug>/api/* on the wire.
+const app = new Hono<{ Bindings: Env }>().basePath('/__SLUG__')
 
 /**
  * Verify a Local First Auth JWT and enforce that it was minted for our origin

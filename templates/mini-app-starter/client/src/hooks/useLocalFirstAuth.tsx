@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const addUserToDatabase = async (profileJwt: string): Promise<User> => {
-    const response = await fetch('/api/add-user', {
+    const response = await fetch(`${import.meta.env.BASE_URL}api/add-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profileJwt }),
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addAvatarToDatabase = async (avatarJwt: string) => {
     try {
-      const response = await fetch('/api/add-avatar', {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/add-avatar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatarJwt }),

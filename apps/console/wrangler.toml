@@ -2,9 +2,9 @@
 #
 # The host is the catch-all Worker that serves the landing grid. It also runs the admin
 # console, so it has its own D1 (operator allowlist) plus bindings to each managed child
-# app's D1. Replace the database_id placeholders with real values from
-# `pnpm wrangler d1 list` (and `wrangler d1 create` for the host DB in local dev). Keep
-# the bindings in sync with alchemy.run.ts and server/src/admin-apps.ts.
+# app's D1. In `wrangler dev --local` every database_id is just a local storage key —
+# any unique string works and no Cloudflare account is needed. Keep the bindings in
+# sync with MANAGED_APPS in shared/src/apps.ts.
 
 name = "console-starter-dev"
 main = "server/src/index.ts"
@@ -15,15 +15,16 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "console-starter-dev-db"
-database_id = "REPLACE_WITH_HOST_DB_ID"
+database_id = "local"
 
 # Managed child app bindings go here — one block per app registered in
-# shared/src/apps.ts (MANAGED_APPS). Example:
+# shared/src/apps.ts (MANAGED_APPS). The console sees its own empty local copy of
+# each child DB in dev, not the child's live data. Example:
 #
 # [[d1_databases]]
 # binding = "DB_<SLUG>"
-# database_name = "<slug>-dev-db"
-# database_id = "REPLACE_WITH_<SLUG>_DB_ID"
+# database_name = "<workspace>-<slug>-mini-app-dev-db"
+# database_id = "<slug>-local"
 
 # Static assets (client build)
 # In dev: Vite serves the client at :5173 (this is unused).

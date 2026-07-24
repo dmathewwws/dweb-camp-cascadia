@@ -39,11 +39,15 @@ monorepo changes how they're developed, not how they ship.
 
    This rewrites the package scope (`@my-space/*`), Cloudflare resource names
    (`my-space-dev`, `my-space-dev-db`), and display strings ("Welcome to My Space")
-   in one shot. The flags are optional: `--allowed-origin` sets the production
-   auth origin in each app's `alchemy.run.ts` (skip it until you have a domain),
-   and `--github-url` points each app's footer link at your fork. Everything is
-   safe to re-run later — the name defaults to the repo directory, and a flags-only
-   run leaves the name alone.
+   in one shot, then migrates the console's local D1 (fully local — no Cloudflare
+   account needed) and prints a checklist of anything left. The flags are optional:
+   `--allowed-origin` sets the production auth origin in each app's `alchemy.run.ts`
+   (skip it until you have a domain), and `--github-url` points each app's footer
+   link at your fork. Everything is safe to re-run later — the name defaults to the
+   repo directory, and a flags-only run leaves the name alone.
+
+   Run `setup-project` **before** scaffolding any apps — `new-app` bakes the
+   workspace name into everything it generates.
 3. Run the host console:
 
    ```bash
@@ -59,6 +63,7 @@ Requires Node >= 22 (`.nvmrc`) and pnpm 10.
 |---|---|
 | `pnpm dev:console` | Run the host console (worker :8787, vite :5173) |
 | `pnpm dev:<slug>` | Run a scaffolded mini app (added by `new-app`) |
+| `pnpm --filter @my-space/<app> run dev:simulator` | Run an app with a fake signed-in user — the only way to sign in without a phone |
 | `pnpm build` | Build every app |
 | `pnpm typecheck` | Typecheck every app |
 | `pnpm new-app <slug>` | Scaffold a new mini app |
@@ -76,26 +81,25 @@ pnpm new-app check-in
 
 This copies `templates/mini-app-starter` into `apps/check-in`, rescopes its packages to
 `@<workspace>/check-in-*`, names its Cloudflare resources
-`<workspace>-check-in-mini-app`, claims a free port pair, sets Vite's `base` to
-`/check-in/`, wires the root tsconfig + `dev:check-in` script, and installs.
+`<workspace>-check-in-mini-app`, claims a free port pair, wires the full `/check-in/`
+subpath serving (Vite base + proxy, router basename, Hono basePath, Alchemy routes),
+adds the root tsconfig + `dev:check-in` script, installs, and runs the app's local D1
+migrations. `pnpm dev:check-in` works immediately.
 
-It then prints the things it can't do for you:
-
-1. **Serve it under `/check-in/`** — prefix the server's routes to `/check-in/api/*`.
-   The full subpath contract (Vite base, router basename, base-relative fetch/ws, two
-   Alchemy route patterns) is in
-   [`apps/console/docs/hosting-a-mini-app.md`](apps/console/docs/hosting-a-mini-app.md).
-2. **Register it with the host console** after its first deploy: add its card to
-   `apps/console/client/src/apps.ts`, add it to `MANAGED_APPS` + `ChildBindingKey` in
-   `apps/console/shared/src/apps.ts` (needs the real D1 UUID), and add the matching dev
-   binding in `apps/console/wrangler.toml`.
+It ends with a short checklist; the one genuinely manual step is **registering the app
+with the host console** after its first deploy (needs the real prod D1 UUID) — follow
+"Register with the host console" in
+[`apps/console/docs/hosting-a-mini-app.md`](apps/console/docs/hosting-a-mini-app.md).
 
 ## Deployment
 
 Apps deploy independently to Cloudflare's free tier:
 
 ```bash
-pnpm alchemy configure                                  # once: Cloudflare API token
+# once per app: deploy credentials (alchemy is an app-level devDep, not a root one)
+cp apps/console/.env.example apps/console/.env          # fill in CLOUDFLARE_ACCOUNT_ID + ALCHEMY_STATE_TOKEN
+pnpm --filter @my-space/console exec alchemy configure  # once: Cloudflare API token
+
 pnpm --filter @my-space/console run deploy:cloudflare   # per app: build + deploy
 ```
 

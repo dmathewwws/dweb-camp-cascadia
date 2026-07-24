@@ -1,8 +1,8 @@
 /**
  * App registry — the single source of truth for the landing grid.
  *
- * Each mini app is an independent Cloudflare Worker, deployed from its own repo,
- * bound to the route patterns `<domain>/<slug>` and `<domain>/<slug>/*`. Cloudflare
+ * Each mini app is an independent Cloudflare Worker (living at `apps/<slug>` in this
+ * workspace), bound to the route patterns `<domain>/<slug>` and `<domain>/<slug>/*`. Cloudflare
  * resolves the most-specific route first, so a child Worker automatically overrides
  * this host's catch-all for its own paths.
  *

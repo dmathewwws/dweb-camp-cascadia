@@ -12,19 +12,24 @@
  *     from the same starter and share its generic `@starter/*` names; the
  *     workspace scope comes from the root package.json name)
  *   - rewrites `@starter/shared` imports/deps to the app-scoped shared package
- *   - names the Cloudflare resources `<workspace>-<slug>-mini-app*`
+ *   - resolves the template's placeholder tokens: `__SLUG__` (vite base + proxy,
+ *     Hono basePath, alchemy routes), `__SLUG_TITLE__` (html title, manifest),
+ *     `__APP_NAME__` (Cloudflare resource names, `<workspace>-<slug>-mini-app`)
+ *     — then fails loudly if any token survived the pass
  *   - claims a free worker + vite port pair so apps can run side by side
  *   - wires the app into the root tsconfig references and adds a `dev:<slug>` script
+ *   - installs and runs the app's local D1 migrations
  *
- * What it deliberately does NOT do: register the app with the host console.
- * That needs a real deployed D1 UUID and a decision about server-side subpath
- * routing, so it's printed as a checklist instead of guessed at.
+ * The scaffolded app is fully wired for `/<slug>/` subpath serving. The one thing
+ * that stays manual is registering the app with the host console after its first
+ * deploy (needs the real prod D1 UUID) — the closing checklist points at
+ * apps/console/docs/hosting-a-mini-app.md for that.
  */
 
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import { getWorkspaceName, KEBAB_RE, REPO_ROOT } from './lib/workspace'
+import { getWorkspaceName, KEBAB_RE, REPO_ROOT, toTitleCase } from './lib/workspace'
 const TEMPLATE_DIR = path.join(REPO_ROOT, 'templates', 'mini-app-starter')
 const APPS_DIR = path.join(REPO_ROOT, 'apps')
 
@@ -39,6 +44,7 @@ const SKIP = new Set([
   'pnpm-workspace.yaml',
   'UPSTREAM.md',
   'LICENSE',
+  'tsconfig.tsbuildinfo',
 ])
 
 /** Files we rewrite text inside of. */
@@ -133,9 +139,11 @@ const REWRITES: Array<[RegExp, string]> = [
   // path filters are CWD-relative and fragile in a monorepo — use real names
   [/--filter=\.\/client/g, `--filter=${clientPkg}`],
   [/--filter=\.\/server/g, `--filter=${serverPkg}`],
-  // Cloudflare resource names (wrangler.toml + alchemy.run.ts)
-  [/mini-app-starter-dev/g, `${cfName}-dev`],
-  [/alchemy\('mini-app-starter'/g, `alchemy('${cfName}'`],
+  // template placeholder tokens (longest first, so __SLUG__ can't half-eat
+  // __SLUG_TITLE__)
+  [/__SLUG_TITLE__/g, toTitleCase(slug)],
+  [/__APP_NAME__/g, cfName],
+  [/__SLUG__/g, slug],
 ]
 
 for (const file of walk(destDir)) {
@@ -145,7 +153,20 @@ for (const file of walk(destDir)) {
   if (after !== before) fs.writeFileSync(file, after)
 }
 
-// ── ports + subpath base ────────────────────────────────────────────────────
+// Fail loudly if the template grew a token in a spot the pass missed (e.g. a new
+// file extension outside TEXT_EXT) — a silent leftover would ship a broken app.
+const leftovers = walk(destDir).filter((f) =>
+  /__SLUG__|__SLUG_TITLE__|__APP_NAME__/.test(fs.readFileSync(f, 'utf8')),
+)
+if (leftovers.length > 0) {
+  die(
+    `Unreplaced template tokens in:\n  ${leftovers
+      .map((f) => path.relative(REPO_ROOT, f))
+      .join('\n  ')}`,
+  )
+}
+
+// ── ports ───────────────────────────────────────────────────────────────────
 const wranglerPath = path.join(destDir, 'wrangler.toml')
 fs.writeFileSync(
   wranglerPath,
@@ -153,15 +174,13 @@ fs.writeFileSync(
 )
 
 const vitePath = path.join(destDir, 'client', 'vite.config.ts')
-let vite = fs.readFileSync(vitePath, 'utf8')
-vite = vite
-  .replace(/port:\s*\d+/, `port: ${vitePort}`)
-  .replace(/target:\s*'http:\/\/localhost:\d+'/g, `target: 'http://localhost:${workerPort}'`)
-// Child mini apps are served under <domain>/<slug>/ by the host console.
-if (!/^\s*base:/m.test(vite)) {
-  vite = vite.replace(/defineConfig\(\{\n/, `defineConfig({\n  base: '/${slug}/',\n`)
-}
-fs.writeFileSync(vitePath, vite)
+fs.writeFileSync(
+  vitePath,
+  fs
+    .readFileSync(vitePath, 'utf8')
+    .replace(/port:\s*\d+/, `port: ${vitePort}`)
+    .replace(/target:\s*'http:\/\/localhost:\d+'/g, `target: 'http://localhost:${workerPort}'`),
+)
 
 // ── root wiring (tsconfig reference + dev:<slug> script) ───────────────────
 const rootTsconfigPath = path.join(REPO_ROOT, 'tsconfig.json')
@@ -183,12 +202,46 @@ if (!rootPkg.scripts[`dev:${slug}`]) {
   fs.writeFileSync(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n')
 }
 
-// ── install ─────────────────────────────────────────────────────────────────
+// ── install + local migrations ──────────────────────────────────────────────
 console.log('   Installing workspace dependencies…\n')
+let installed = true
 try {
   execFileSync('pnpm', ['install'], { cwd: REPO_ROOT, stdio: 'inherit' })
 } catch {
+  installed = false
   console.warn('\n⚠ `pnpm install` failed — run it yourself once you\'ve looked at the app.\n')
 }
 
-console.log(`\n✅ apps/${slug} created\n`)
+// The app's D1 is local-only in dev (database_id = "local"), so migrations need
+// no Cloudflare auth — run them now so `pnpm dev:<slug>` works immediately.
+let migrated = false
+if (installed) {
+  console.log('   Running local D1 migrations…\n')
+  try {
+    execFileSync('pnpm', ['run', 'db:run-migrations'], { cwd: destDir, stdio: 'inherit' })
+    migrated = true
+  } catch {
+    console.warn('\n⚠ Local migrations failed — see the checklist below.\n')
+  }
+}
+
+// ── report ──────────────────────────────────────────────────────────────────
+const filter = `pnpm --filter ${pkgScope}`
+console.log(`
+✅ apps/${slug} created
+   packages  ${pkgScope}{,-client,-server,-shared}
+   ports     worker :${workerPort} · vite :${vitePort}  →  http://localhost:${vitePort}/${slug}/
+   serving   /${slug}/ base + /${slug}/api/* (already wired)
+   db        ${migrated ? 'local D1 migrated ✔' : `⚠ run: ${filter} run db:run-migrations`}
+
+Next steps:
+  1. Run it: pnpm dev:${slug}   (simulator sign-in: ${filter} run dev:simulator)
+  2. Build your features — see apps/${slug}/CLAUDE.md.
+  3. Deploy: cp apps/${slug}/.env.example apps/${slug}/.env, set ALCHEMY_STATE_TOKEN,
+     then ${filter} run deploy:cloudflare
+     (routes attach automatically once ALLOWED_ORIGIN is your real domain —
+      set it once for all apps: pnpm setup-project --allowed-origin https://your.domain)
+  4. After the first deploy, register the app with the host console — follow
+     "Register with the host console" in apps/console/docs/hosting-a-mini-app.md
+     (grid card, MANAGED_APPS + ChildBindingKey, DB_${slug.replace(/-/g, '_').toUpperCase()} dev binding, redeploy host).
+`)

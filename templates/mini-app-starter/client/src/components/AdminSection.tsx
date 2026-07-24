@@ -23,7 +23,7 @@ export function AdminSection({ getProfileJwt, onReset }: AdminSectionProps) {
     setError(null)
 
     try {
-      const response = await fetch('/api/reset', {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileJwt, message }),

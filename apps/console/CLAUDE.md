@@ -89,12 +89,14 @@ gate is visibility only. Granting the first operator is a manual DB edit — see
 
 ## Registering a mini app with the host
 
-After the child app's first deploy (you need its real D1 UUID from
-`pnpm wrangler d1 list`):
+The canonical checklist is **"Register with the host console"** in
+[`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md). In short, after the
+child app's first deploy (you need its real prod D1 UUID from `wrangler d1 list`):
 
-1. `client/src/apps.ts` — add the landing-grid card (`path: '/<slug>/'`)
-2. `shared/src/apps.ts` — add the entry to `MANAGED_APPS` and extend `ChildBindingKey`
-   (replace `never` with the union of binding keys, e.g. `'DB_CHECK_IN'`)
+1. `client/src/apps.ts` — add the landing-grid card (`path: '/<slug>'`, no trailing slash)
+2. `shared/src/apps.ts` — add the entry to `MANAGED_APPS` **and** extend
+   `ChildBindingKey` (replace `never` with the union of binding keys, e.g.
+   `'DB_CHECK_IN'` — a `MANAGED_APPS` entry without it is a compile error)
 3. `wrangler.toml` — add the matching `DB_<SLUG>` dev binding (commented example block
    is in the file)
 4. Redeploy the host (`pnpm deploy:cloudflare`)

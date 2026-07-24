@@ -14,7 +14,7 @@ export function useWebSockets({ userId, isAdmin, onReset }: UseWebSocketsOptions
     if (!userId) return
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/ws`
+    const wsUrl = `${protocol}//${window.location.host}${import.meta.env.BASE_URL}api/ws`
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

@@ -7,6 +7,9 @@ export const users = sqliteTable('users', {
   avatar: text('avatar'),
   socials: text('socials'), // JSON array of strings: ["platform:handle", "platform:handle"]
   isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
+  // Required by the host console's admin "Block" action, which writes this
+  // column directly through its D1 binding to this app's database.
+  blocked: integer('blocked', { mode: 'boolean' }).notNull().default(false),
   createdAt : integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
 }, (table) => [
   index('idx_users_created_at').on(table.createdAt),

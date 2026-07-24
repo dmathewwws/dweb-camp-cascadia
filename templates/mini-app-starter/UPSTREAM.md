@@ -28,6 +28,28 @@ diff -ru templates/mini-app-starter /tmp/starter --exclude=.git --exclude=node_m
 
 Apply what you want by hand, then bump the commit hash above.
 
+## Local modifications (expected to differ from upstream)
+
+This copy is adapted for life inside the workspace, so an upstream diff will always
+show these; keep the local versions:
+
+- **Placeholder tokens** — `__SLUG__` (vite `base` + proxy key, Hono `basePath`,
+  alchemy routes), `__SLUG_TITLE__` (html title, manifest name), and `__APP_NAME__`
+  (Cloudflare resource names) are resolved by `new-app.ts` at scaffold time, which
+  fails loudly if any token survives. If you add a file that needs the slug, use a
+  token rather than a hardcoded name.
+- **Standalone-setup files removed** — `scripts/setup.ts`, the `setup-project`
+  npm script, and `docs/project-setup.md` are gone: renaming happens at the
+  workspace root, and the old per-app rename would break the `<workspace>-<slug>-…`
+  naming convention.
+- **Shared docs deduplicated** — `local-first-auth-spec.md`, `mini-app-examples.md`,
+  and `port-troubleshooting.md` live once at the workspace root `docs/`; links here
+  use `../../docs/…`, which resolves from `apps/<slug>/` after scaffolding.
+- **Subpath serving pre-wired** — router `basename`, `BASE_URL`-relative fetches/WS,
+  and derived alchemy `routes`, per `apps/console/docs/hosting-a-mini-app.md`.
+- **`blocked` column** in the users schema (migration 0002) — required by the host
+  console's admin Block action.
+
 Note: `pnpm setup-project --github-url … --allowed-origin …` writes your fork's
 values into this copy (the footer link in `client/src/components/Footer.tsx` and
 `ALLOWED_ORIGIN` in `alchemy.run.ts`), so the diff against upstream will show

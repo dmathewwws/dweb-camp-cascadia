@@ -30,7 +30,8 @@ pnpm wrangler d1 execute check-in-dev-db --local --command "UPDATE users SET is_
 pnpm wrangler d1 execute check-in-prod-db --remote --command "UPDATE users SET is_admin = 1 WHERE did = 'did:key:z...';"
 ```
 
-> **How the console reaches each app's D1:** the host Worker binds each managed app's D1
-> directly (adopted by name in `alchemy.run.ts` / `wrangler.toml`, mapped by slug in
-> `server/src/admin-apps.ts`). This requires every app to live in the same pinned
-> Cloudflare account. See [`docs/hosting-a-mini-app.md`](./hosting-a-mini-app.md) §8.
+> **How the console reaches each app's D1:** the host Worker binds each managed app's
+> D1 directly, driven by the `MANAGED_APPS` registry in `shared/src/apps.ts` (the D1
+> UUID is the sync point; `alchemy.run.ts` and `server/src/admin-apps.ts` both derive
+> from the registry). This requires every app to live in the same pinned Cloudflare
+> account. See [`docs/hosting-a-mini-app.md`](./hosting-a-mini-app.md).
