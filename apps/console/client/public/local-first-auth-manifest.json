@@ -1,0 +1,7 @@
+{
+  "name": "Console Starter",
+  "description": "The Console Starter directory of mini apps for you and your friends",
+  "icon": "./icon.webp",
+  "type": "app",
+  "permissions": []
+}
