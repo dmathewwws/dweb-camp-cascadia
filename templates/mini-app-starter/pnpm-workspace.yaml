@@ -2,3 +2,10 @@ packages:
   - client
   - server
   - shared
+
+# pnpm 10 blocks dependency build scripts by default; these need theirs
+# (mirrors the root workspace allowlist).
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
