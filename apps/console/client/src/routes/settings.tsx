@@ -305,14 +305,8 @@ function ProfileSection({ editable }: { editable: boolean }) {
         // Read-only native host: no Edit / Log out — the profile is owned by the host.
         <div className="space-y-4 border-t border-gray-200 pt-6">
           <p className="text-center text-sm text-gray-500">
-            Your profile lives in the Local First Auth app. To change your name, avatar, or
-            links, edit it there.
+            Your profile lives in the Local First Auth app. To change your name, avatar, or links, edit it there.
           </p>
-          <div className="flex justify-center">
-            <button onClick={() => hostApi()?.close()} className="btn-primary px-6 py-2.5">
-              Done
-            </button>
-          </div>
         </div>
       )}
     </div>
