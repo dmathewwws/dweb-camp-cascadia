@@ -31,7 +31,7 @@ pnpm dev:<slug>             # a scaffolded app (script added by new-app)
 pnpm build                  # build every app
 pnpm typecheck              # tsc -b every app
 pnpm new-app <slug>         # scaffold a mini app from the template
-pnpm setup-project [name] [--allowed-origins <csv>] [--github-url <url>]
+pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]
                             # rename the workspace + optional prod settings
 ```
 
@@ -47,7 +47,7 @@ this project.
 Run: `pnpm setup-project {kebab-case-name}` (defaults to the repo directory name). It
 rewrites the package scope, Cloudflare resource names, and display strings from the
 current workspace name to the new one, then reinstalls. Optional flags:
-`--allowed-origins <csv>` sets the production `ALLOWED_ORIGINS` in every
+`--allowed-origin <url>` sets the production `ALLOWED_ORIGIN` in every
 `apps/*/alchemy.run.ts`, and `--github-url <url>` points each app's footer link
 (`apps/*/client/src/components/Footer.tsx`) at the user's fork; a flags-only run
 leaves the name unchanged. Both flags also update `templates/mini-app-starter`, so
@@ -75,7 +75,7 @@ and GitHub template flag always remain manual).
 Users sign in by scanning a QR code with Antler Browser, which injects
 `window.localFirstAuth`; identity is a `did:key` and requests carry short-lived EdDSA
 JWTs verified server-side by each app's `shared/src/jwt.ts` (`decodeAndVerifyJWT`,
-checks signature + expiry + allowed origins). Local dev without a phone:
+checks signature + expiry + allowed origin). Local dev without a phone:
 `pnpm --filter @<workspace>/<app> run dev:simulator`. Full spec:
 `docs/local-first-auth-spec.md`.
 

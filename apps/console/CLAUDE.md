@@ -38,7 +38,7 @@ prerequisite) and [`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md)
 
 - `src/index.ts` — Hono router: profile endpoints + admin API (tables below)
 - `src/admin-apps.ts` — resolves a managed app slug to its bound D1 (`dbForSlug`)
-- `src/types.ts` — `Env`: host `DB`, `ALLOWED_ORIGINS`, plus one binding per
+- `src/types.ts` — `Env`: host `DB`, `ALLOWED_ORIGIN`, plus one binding per
   `ChildBindingKey`
 - `src/db/` — Drizzle schema, models, migrations for the host's own D1
 
@@ -48,7 +48,7 @@ prerequisite) and [`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md)
   truth shared by `alchemy.run.ts` (binds each child D1 by UUID) and
   `server/src/admin-apps.ts`. Currently empty (`ChildBindingKey = never`) — extend both
   when registering an app
-- `src/jwt.ts` — `decodeAndVerifyJWT` (EdDSA signature, expiry, allowed origins)
+- `src/jwt.ts` — `decodeAndVerifyJWT` (EdDSA signature, expiry, allowed origin)
 
 ## Development Commands
 
@@ -118,7 +118,8 @@ via Alchemy's `migrationsDir`.
 Auth uses the Local First Auth spec (full spec:
 [`../../docs/local-first-auth-spec.md`](../../docs/local-first-auth-spec.md)): the
 browser injects `window.localFirstAuth`, identity is a `did:key`, and API calls carry
-short-lived EdDSA JWTs verified by `shared/src/jwt.ts` against `ALLOWED_ORIGINS`.
+short-lived EdDSA JWTs verified by `shared/src/jwt.ts` against `ALLOWED_ORIGIN`
+(prod only — it's unset in dev, which skips the audience check).
 
 Auth states in the client (`useLocalFirstAuth()`):
 
@@ -133,16 +134,17 @@ Auth states in the client (`useLocalFirstAuth()`):
 `alchemy.run.ts` deploys the Worker + host D1 + managed-app bindings
 (`pnpm deploy:cloudflare`). `wrangler.toml` is **dev-only**. The `<domain>/*` route is
 attached manually in the Cloudflare dashboard (path routing needs a real zone — see
-[`docs/domain-setup.md`](./docs/domain-setup.md)). `ALLOWED_ORIGINS` prod value is a
+[`docs/domain-setup.md`](./docs/domain-setup.md)). `ALLOWED_ORIGIN` prod value is a
 committed literal in `alchemy.run.ts` on purpose (see
 [`docs/secrets.md`](./docs/secrets.md)) — replace `https://your-domain.example` with
-your domain (or run `pnpm setup-project --allowed-origins https://your.domain` from
+your domain (or run `pnpm setup-project --allowed-origin https://your.domain` from
 the repo root).
 
 ## Troubleshooting
 
 - **JWT verification failures** — expired token, invalid signature, malformed DID
-  (must start with `did:key:z`), or origin not in `ALLOWED_ORIGINS`
+  (must start with `did:key:z`), or (prod only) the JWT's `aud` doesn't match
+  `ALLOWED_ORIGIN`
 - **Admin section not showing** — the caller's DID isn't flagged `is_admin` in the
   *host's* D1 ([`docs/admin-setup.md`](./docs/admin-setup.md))
 - **"Unknown app" from admin endpoints** — slug not in `MANAGED_APPS`, or the dev

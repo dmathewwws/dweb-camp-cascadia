@@ -24,19 +24,13 @@ import { decodeAndVerifyJWT } from '@console-starter/console-shared'
 const app = new Hono<{ Bindings: Env }>()
 
 /**
- * Origins this Worker accepts Local First Auth JWTs for, from the ALLOWED_ORIGINS binding.
- * Empty (unset) means the audience check is skipped.
- */
-const allowedOrigins = (env: Env): string[] =>
-  env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? []
-
-/**
- * Verify a Local First Auth JWT and enforce that it was minted for one of our origins.
+ * Verify a Local First Auth JWT and enforce that it was minted for our origin
+ * (the ALLOWED_ORIGIN binding; unset in dev, which skips the audience check).
  * local-first-auth signs with a per-origin key, so a JWT issued at another origin carries
  * a different DID and would silently create a duplicate user row.
  */
 const verifyJwt = (c: Context<{ Bindings: Env }>, jwt: string) =>
-  decodeAndVerifyJWT(jwt, allowedOrigins(c.env))
+  decodeAndVerifyJWT(jwt, c.env.ALLOWED_ORIGIN)
 
 app.use('/*', cors({ origin: '*' }))
 

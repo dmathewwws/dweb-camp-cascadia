@@ -33,14 +33,14 @@ monorepo changes how they're developed, not how they ship.
    ```bash
    pnpm install
    pnpm setup-project my-space \
-     --allowed-origins https://my.domain \
+     --allowed-origin https://my.domain \
      --github-url https://github.com/you/your-fork
    ```
 
    This rewrites the package scope (`@my-space/*`), Cloudflare resource names
    (`my-space-dev`, `my-space-dev-db`), and display strings ("Welcome to My Space")
-   in one shot. The flags are optional: `--allowed-origins` sets the production
-   auth origins in each app's `alchemy.run.ts` (skip it until you have a domain),
+   in one shot. The flags are optional: `--allowed-origin` sets the production
+   auth origin in each app's `alchemy.run.ts` (skip it until you have a domain),
    and `--github-url` points each app's footer link at your fork. Everything is
    safe to re-run later — the name defaults to the repo directory, and a flags-only
    run leaves the name alone.
@@ -62,7 +62,7 @@ Requires Node >= 22 (`.nvmrc`) and pnpm 10.
 | `pnpm build` | Build every app |
 | `pnpm typecheck` | Typecheck every app |
 | `pnpm new-app <slug>` | Scaffold a new mini app |
-| `pnpm setup-project [name] [--allowed-origins <csv>] [--github-url <url>]` | Rename the workspace / set prod origins + footer repo link |
+| `pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]` | Rename the workspace / set the prod origin + footer repo link |
 
 Each app claims its own worker + vite port pair (console is 8787/5173, the next app
 gets 8788/5174, and so on), so you can run several at once. Anything app-specific goes
@@ -104,15 +104,16 @@ domain, not `*.workers.dev`. Set that up per
 [`apps/console/docs/domain-setup.md`](apps/console/docs/domain-setup.md), attach the
 host's `<domain>/*` route in the dashboard, and replace the
 `https://your-domain.example` placeholder in each app's `alchemy.run.ts`
-(or run `pnpm setup-project --allowed-origins https://your.domain` from the root).
+(or run `pnpm setup-project --allowed-origin https://your.domain` from the root).
 
 ## Secrets & env vars
 
 Every app follows one convention, sorted by one question — does the value differ
 between local dev and prod? Same-everywhere values (secrets and non-secrets) live in
 `.env`, read by the wrangler `[secrets]` gate in dev and `alchemy.(secret.)env`
-bindings at deploy; environment-differing values are committed literals (dev in
-`wrangler.toml [vars]`, prod in `alchemy.run.ts`); infra creds stay in `.env` and are
+bindings at deploy; environment-differing values are committed literals in
+`alchemy.run.ts` for prod (e.g. `ALLOWED_ORIGIN`, which stays unset in dev so the JWT
+audience check is skipped); infra creds stay in `.env` and are
 never bound to the Worker. The canonical doc is
 [`templates/mini-app-starter/docs/secrets.md`](templates/mini-app-starter/docs/secrets.md);
 each app's `docs/secrets.md` applies it to that app.

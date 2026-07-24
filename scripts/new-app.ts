@@ -191,27 +191,4 @@ try {
   console.warn('\n⚠ `pnpm install` failed — run it yourself once you\'ve looked at the app.\n')
 }
 
-// ── report ──────────────────────────────────────────────────────────────────
-console.log(`
-✅ apps/${slug} created
-
-   packages     ${pkgScope}, ${clientPkg}, ${serverPkg}, ${sharedPkg}
-   cloudflare   ${cfName}  (worker, D1: ${cfName}-<stage>-db)
-   dev          worker :${workerPort}   vite :${vitePort}
-   run it       pnpm dev:${slug}
-
-   Still to do by hand — these need real decisions, not guesses:
-
-   1. Serve it under /${slug}/
-      Vite's \`base\` is set, but the server still mounts routes at /api/*.
-      Prefix them to /${slug}/api/* — see apps/console/docs/hosting-a-mini-app.md
-
-   2. Deploy it, then register it with the host console:
-      pnpm --filter ${pkgScope} run deploy:cloudflare
-
-      • apps/console/shared/src/apps.ts   → add to MANAGED_APPS + ChildBindingKey
-                                            (needs the real D1 UUID from the deploy)
-      • apps/console/client/src/apps.ts   → add the landing-grid card
-      • apps/console/wrangler.toml        → add the DB_${slug.toUpperCase().replace(/-/g, '_')} dev binding
-                                            (see the commented example block)
-`)
+console.log(`\n✅ apps/${slug} created\n`)

@@ -76,12 +76,12 @@ export const worker = await Worker('worker', {
     ASSETS: staticAssets,
     DB: database,
     ...managedDbBindings,
-    // Origins we accept Local First Auth JWTs for. All apps are path-routed on one
-    // origin, so the per-origin DID is identical across console/events/party-pics.
+    // The single origin we accept Local First Auth JWTs for. All apps are path-routed
+    // on one origin, so the per-origin DID is identical across console/events/party-pics.
     // Committed literal on purpose — never read this from .env (alchemy deploy loads
-    // .env, so a local deploy would push localhost origins to prod). Dev values live
-    // in wrangler.toml [vars]. See docs/secrets.md.
-    ALLOWED_ORIGINS: 'https://your-domain.example',
+    // .env, so a local deploy would push a localhost origin to prod). Left unset in dev
+    // (wrangler.toml), which skips the audience check. See docs/secrets.md.
+    ALLOWED_ORIGIN: 'https://your-domain.example',
   },
   assets: {
     html_handling: 'auto-trailing-slash',

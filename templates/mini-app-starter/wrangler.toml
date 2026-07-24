@@ -36,10 +36,12 @@ new_classes = ["Broadcaster"]
 # [secrets]
 # required = ["MY_SECRET"]
 
-# Origins the Worker accepts Local First Auth JWTs for (dev: the Vite client and the
-# wrangler dev server). Set your deployed origin in alchemy.run.ts for production.
+# ALLOWED_ORIGIN is left unset in dev so the JWT audience check is skipped —
+# each scaffolded app gets its own port pair (5174/8788, 5175/8789, …), which a
+# hardcoded localhost value wouldn't match. Set your deployed origin in
+# alchemy.run.ts for production.
 [vars]
-ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:8787"
+# ALLOWED_ORIGIN = "http://localhost:5173"
 
 # Dev server configuration
 [dev]

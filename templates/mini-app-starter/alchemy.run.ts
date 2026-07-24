@@ -59,11 +59,11 @@ export const worker = await Worker('worker', {
     DB: database,
     DURABLE_OBJECT: durableObject,
     ASSETS: staticAssets,
-    // Origins this app accepts Local First Auth JWTs for. Committed literal on
-    // purpose — never read this from .env (alchemy deploy loads .env, so a local
-    // deploy would push localhost origins to prod). Apps hosted under the host
+    // The single origin this app accepts Local First Auth JWTs for. Committed literal
+    // on purpose — never read this from .env (alchemy deploy loads .env, so a local
+    // deploy would push a localhost origin to prod). Apps hosted under the host
     // console are path-routed on this one origin; change it if you deploy elsewhere.
-    ALLOWED_ORIGINS: 'https://your-domain.example',
+    ALLOWED_ORIGIN: 'https://your-domain.example',
     // Example runtime secret — the full pattern (see docs/secrets.md):
     //   1. add MY_SECRET= to .env and .env.example
     //   2. add it to [secrets] required in wrangler.toml (local dev)

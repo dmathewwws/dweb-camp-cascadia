@@ -2,7 +2,7 @@
 /**
  * Set up the workspace — run this once after forking the template.
  *
- *   pnpm setup-project [name] [--allowed-origins <csv>] [--github-url <url>]
+ *   pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]
  *
  * `name` defaults to the repo directory name, except when only flags are passed —
  * then the current name is kept so a flags-only run never triggers a rename.
@@ -15,7 +15,7 @@
  * scaffolded extra apps, and can even reverse itself
  * (`pnpm setup-project console-starter` restores the template naming).
  *
- * --allowed-origins sets the production ALLOWED_ORIGINS literal in every
+ * --allowed-origin sets the production ALLOWED_ORIGIN literal in every
  * `apps/<app>/alchemy.run.ts`; --github-url points the footer's open-source link
  * (`apps/<app>/client/src/components/Footer.tsx`) at your fork. Both match whatever
  * value is currently there, so they are also re-runnable and reversible. Both are
@@ -26,9 +26,8 @@
  * its generic `@starter/*` names, and new-app.ts rescopes them at copy time using
  * whatever the workspace is called then.
  *
- * What it deliberately does NOT touch (printed as a checklist instead):
- * the dev values in `wrangler.toml` [vars] (localhost on purpose) and the dev D1
- * database id.
+ * What it deliberately does NOT touch: `wrangler.toml` (ALLOWED_ORIGIN is unset in
+ * dev on purpose, so the audience check is skipped) and the dev D1 database id.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -50,7 +49,7 @@ const SKIP = new Set([
 /** Files we rewrite text inside of. */
 const TEXT_EXT = new Set(['.ts', '.tsx', '.json', '.toml', '.md', '.html', '.css', '.yaml'])
 
-const USAGE = 'Usage: pnpm setup-project [name] [--allowed-origins <csv>] [--github-url <url>]'
+const USAGE = 'Usage: pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]'
 
 function die(msg: string): never {
   console.error(`\n✖ ${msg}\n`)
@@ -59,12 +58,12 @@ function die(msg: string): never {
 
 // ── args ────────────────────────────────────────────────────────────────────
 let positionals: string[]
-let flags: { 'allowed-origins'?: string; 'github-url'?: string }
+let flags: { 'allowed-origin'?: string; 'github-url'?: string }
 try {
   ;({ positionals, values: flags } = parseArgs({
     args: process.argv.slice(2),
     options: {
-      'allowed-origins': { type: 'string' },
+      'allowed-origin': { type: 'string' },
       'github-url': { type: 'string' },
     },
     allowPositionals: true,
@@ -73,41 +72,38 @@ try {
   die(`${(e as Error).message}\n  ${USAGE}`)
 }
 
-const allowedOrigins = flags['allowed-origins']?.trim()
+const allowedOrigin = flags['allowed-origin']?.trim()
 const githubUrl = flags['github-url']?.trim().replace(/\.git$/, '').replace(/\/+$/, '')
 
-/** Origins are `scheme://host[:port]` — reject paths, trailing slashes, garbage. */
-function parseOrigins(raw: string): string[] {
-  const origins = raw.split(',').map((o) => o.trim()).filter(Boolean)
-  if (origins.length === 0) die(`--allowed-origins is empty.\n  ${USAGE}`)
-  for (const o of origins) {
-    let url: URL
-    try {
-      url = new URL(o)
-    } catch {
-      die(`"${o}" is not a valid URL. Origins look like https://your.domain\n  ${USAGE}`)
-    }
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-      die(`"${o}" must be http(s). Origins look like https://your.domain\n  ${USAGE}`)
-    }
-    if (o !== url.origin) {
-      die(`"${o}" is not a bare origin — drop the path/trailing slash (did you mean "${url.origin}"?)`)
-    }
-    if (url.protocol === 'http:') {
-      console.warn(`⚠ "${o}" is http — these are *production* origins; https expected.`)
-    }
+/** The origin is `scheme://host[:port]` — reject paths, trailing slashes, garbage. */
+function parseOrigin(raw: string): string {
+  if (!raw) die(`--allowed-origin is empty.\n  ${USAGE}`)
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    die(`"${raw}" is not a valid URL. The origin looks like https://your.domain\n  ${USAGE}`)
   }
-  return origins
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    die(`"${raw}" must be http(s). The origin looks like https://your.domain\n  ${USAGE}`)
+  }
+  if (raw !== url.origin) {
+    die(`"${raw}" is not a bare origin — drop the path/trailing slash (did you mean "${url.origin}"?)`)
+  }
+  if (url.protocol === 'http:') {
+    console.warn(`⚠ "${raw}" is http — this is the *production* origin; https expected.`)
+  }
+  return raw
 }
 
-const originsValue = allowedOrigins ? parseOrigins(allowedOrigins).join(',') : undefined
+const originValue = allowedOrigin ? parseOrigin(allowedOrigin) : undefined
 
 if (githubUrl && !/^https:\/\/github\.com\/[^/\s]+\/[^/\s]+$/.test(githubUrl)) {
   die(`--github-url must look like https://github.com/owner/repo (got "${githubUrl}")`)
 }
 
 const current = getWorkspaceName()
-const flagsOnly = positionals.length === 0 && (originsValue !== undefined || githubUrl !== undefined)
+const flagsOnly = positionals.length === 0 && (originValue !== undefined || githubUrl !== undefined)
 const next = flagsOnly ? current : (positionals[0]?.trim() || path.basename(REPO_ROOT)).toLowerCase()
 const renameNeeded = current !== next
 
@@ -125,7 +121,7 @@ if (renameNeeded) {
   }
 }
 
-if (!renameNeeded && !originsValue && !githubUrl) {
+if (!renameNeeded && !originValue && !githubUrl) {
   console.log(`\n✅ Project is already named "${next}" — nothing to do.\n`)
   process.exit(0)
 }
@@ -228,18 +224,18 @@ function setInAppFiles(
   return changed
 }
 
-const ORIGINS_LINE_RE = /^(\s*ALLOWED_ORIGINS:\s*)(['"])[^'"\n]*\2/m
+const ORIGIN_LINE_RE = /^(\s*ALLOWED_ORIGIN:\s*)(['"])[^'"\n]*\2/m
 const GITHUB_HREF_RE = /href="https:\/\/github\.com\/[^"]*"/
 
-let originsChanged = 0
-if (originsValue) {
-  console.log(`\n🌐 Setting production ALLOWED_ORIGINS\n`)
-  originsChanged = setInAppFiles(
+let originChanged = 0
+if (originValue) {
+  console.log(`\n🌐 Setting production ALLOWED_ORIGIN\n`)
+  originChanged = setInAppFiles(
     'alchemy.run.ts',
-    ORIGINS_LINE_RE,
-    originsValue,
-    (m) => `${m[1]}${m[2]}${originsValue}${m[2]}`,
-    'ALLOWED_ORIGINS',
+    ORIGIN_LINE_RE,
+    originValue,
+    (m) => `${m[1]}${m[2]}${originValue}${m[2]}`,
+    'ALLOWED_ORIGIN',
   )
 }
 
@@ -268,11 +264,11 @@ if (renameNeeded) {
 // ── report ──────────────────────────────────────────────────────────────────
 const done: string[] = []
 if (renameNeeded) done.push(`✅ Project renamed to "${next}"`)
-if (originsValue) {
+if (originValue) {
   done.push(
-    originsChanged > 0
-      ? `✅ ALLOWED_ORIGINS set to "${originsValue}" in ${originsChanged} file(s)`
-      : `✅ ALLOWED_ORIGINS already "${originsValue}"`,
+    originChanged > 0
+      ? `✅ ALLOWED_ORIGIN set to "${originValue}" in ${originChanged} file(s)`
+      : `✅ ALLOWED_ORIGIN already "${originValue}"`,
   )
 }
 if (githubUrl) {
@@ -283,29 +279,6 @@ if (githubUrl) {
   )
 }
 
-const todos: string[] = []
-if (!originsValue) {
-  todos.push(
-    'Production origin: replace https://your-domain.example in\n' +
-      '      apps/*/alchemy.run.ts once you know your domain (see apps/console/docs/domain-setup.md),\n' +
-      '      or re-run: pnpm setup-project --allowed-origins https://your.domain',
-  )
-}
-todos.push(
-  'Local dev database: create the host D1 and put its id in apps/console/wrangler.toml\n' +
-    '      (replace REPLACE_WITH_HOST_DB_ID — see apps/console/README.md).',
-)
-todos.push(
-  'If you forked this from the template repo on GitHub, you can now flip OFF\n' +
-    '      Settings → Template repository in your fork.',
-)
+done.push('✅ Project setup complete')
 
 console.log(`\n${done.join('\n')}\n`)
-console.log('   Still to do by hand — these need real values, not guesses:\n')
-todos.forEach((t, i) => console.log(`   ${i + 1}. ${t}\n`))
-if (!githubUrl) {
-  console.log(
-    "   Optional: point the footer's open-source link at your fork —\n" +
-      '   pnpm setup-project --github-url https://github.com/you/your-fork\n',
-  )
-}

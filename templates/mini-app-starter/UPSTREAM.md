@@ -28,9 +28,9 @@ diff -ru templates/mini-app-starter /tmp/starter --exclude=.git --exclude=node_m
 
 Apply what you want by hand, then bump the commit hash above.
 
-Note: `pnpm setup-project --github-url … --allowed-origins …` writes your fork's
+Note: `pnpm setup-project --github-url … --allowed-origin …` writes your fork's
 values into this copy (the footer link in `client/src/components/Footer.tsx` and
-`ALLOWED_ORIGINS` in `alchemy.run.ts`), so the diff against upstream will show
+`ALLOWED_ORIGIN` in `alchemy.run.ts`), so the diff against upstream will show
 those lines changed — that's expected; keep your values.
 
 Note: existing apps under `apps/` are **not** retroactively updated — they diverge

@@ -11,7 +11,7 @@ The sorting rule: **does the value differ between local dev and prod?**
 |---|---|---|---|---|
 | **Infra/deploy creds** | `ALCHEMY_STATE_TOKEN`, `ALCHEMY_PASSWORD`, `ALCHEMY_STAGE`, `CLOUDFLARE_ACCOUNT_ID` | n/a (never reach the app runtime) | `.env`, read by `alchemy deploy` | No — `.env` is gitignored |
 | **Env-invariant runtime values** (same value locally and in prod — secrets AND non-secrets, e.g. an API key, an account id, a bucket name) | `MY_SECRET`, `R2_ACCOUNT_ID` | `.env`, injected into `c.env` via `[secrets] required` in wrangler.toml | binding in alchemy.run.ts, seeded from `.env` at deploy: `alchemy.secret.env.X` for secrets, `alchemy.env.X` for non-secrets — both throw if the var is unset | No — `.env` only |
-| **Env-varying non-secrets** (different value locally vs prod) | `ALLOWED_ORIGINS` | committed literal in wrangler.toml `[vars]` | committed literal in alchemy.run.ts | Yes — both files |
+| **Env-varying non-secrets** (different value locally vs prod) | `ALLOWED_ORIGIN` | committed literal in wrangler.toml `[vars]` if dev needs one (`ALLOWED_ORIGIN` is deliberately unset in dev — the JWT audience check is skipped) | committed literal in alchemy.run.ts | Yes — both files |
 
 Why env-varying values must be committed literals and **never route through `.env`**:
 `alchemy deploy` loads `.env`, so a local deploy would push your localhost values

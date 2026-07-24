@@ -22,14 +22,14 @@ export interface LocalFirstAuthJWTPayload {
  * Decode and verify a JWT from Local First Auth
  *
  * @param jwt - The JWT to verify
- * @param allowedOrigins - Origins this app accepts JWTs for. Since local-first-auth v3
+ * @param allowedOrigin - The origin this app accepts JWTs for. Since local-first-auth v3
  *   signs with a per-origin key, a JWT minted for another origin carries a different DID
  *   and would create a duplicate user row — so reject it. Omit to skip the check (the
- *   client decodes its own same-origin JWTs, and the template ships unconfigured).
+ *   client decodes its own same-origin JWTs, and dev runs unconfigured).
  */
 export async function decodeAndVerifyJWT(
   jwt: string,
-  allowedOrigins?: string[],
+  allowedOrigin?: string,
 ): Promise<LocalFirstAuthJWTPayload> {
   try {
     // First decode to get the issuer (DID) and claims
@@ -45,8 +45,8 @@ export async function decodeAndVerifyJWT(
     }
 
     // check audience claim to ensure this JWT is intended for this application
-    if (allowedOrigins?.length) {
-      if (!decoded.aud || !allowedOrigins.includes(decoded.aud as string)) {
+    if (allowedOrigin) {
+      if (decoded.aud !== allowedOrigin) {
         throw new Error(`This JWT is not intended for this application. aud received: ${decoded.aud}`);
       }
     }
