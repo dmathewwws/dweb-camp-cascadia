@@ -105,8 +105,8 @@ The host owns only its own D1 (`<workspace>-dev-db` locally, `<workspace>-<stage
 in prod). Child databases are referenced by UUID, never created or migrated here.
 
 ```bash
-pnpm wrangler d1 execute console-starter-dev-db --local --command "SELECT * FROM users;"
-pnpm wrangler d1 execute console-starter-prod-db --remote --command "SELECT * FROM users;"
+pnpm wrangler d1 execute dweb-dev-db --local --command "SELECT * FROM users;"
+pnpm wrangler d1 execute dweb-prod-db --remote --command "SELECT * FROM users;"
 ```
 
 Migration workflow: edit `server/src/db/schema.ts` → `pnpm db:generate-migrations` →

@@ -1,4 +1,4 @@
-# Console Starter
+# Dweb
 
 A starter template for hosting a family of [Local First Auth](docs/local-first-auth-spec.md)
 mini apps on one domain — a **host console** (landing grid + admin) plus as many

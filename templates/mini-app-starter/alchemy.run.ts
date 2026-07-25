@@ -18,7 +18,7 @@ import type { Broadcaster } from './server/src/durable-object'
 // --allowed-production-origin https://your.domain` (from the workspace root) replaces
 // it everywhere at once. While it is still the placeholder, no routes are attached —
 // the Worker only gets its workers.dev URL.
-const ALLOWED_PRODUCTION_ORIGIN = 'https://your-domain.example'
+const ALLOWED_PRODUCTION_ORIGIN = 'https://dweb.dmathewwws.com'
 const hasRealOrigin = !ALLOWED_PRODUCTION_ORIGIN.includes('your-domain.example')
 
 // Initialize Alchemy app with remote state store

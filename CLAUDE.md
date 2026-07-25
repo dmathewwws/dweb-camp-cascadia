@@ -1,4 +1,4 @@
-# CLAUDE.md — Console Starter workspace
+# CLAUDE.md — Dweb workspace
 
 Guidance for Claude Code when working in this repository.
 

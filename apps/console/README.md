@@ -1,8 +1,8 @@
-# Console Starter — Mini App Host
+# Dweb — Mini App Host
 
 ## Overview
 
-This repo is the **host** for a collection of Console Starter mini apps. It's a single catch-all
+This repo is the **host** for a collection of Dweb mini apps. It's a single catch-all
 Cloudflare Worker that:
 
 - serves a **landing grid** of mini apps at `/` (driven by `client/src/apps.ts`),

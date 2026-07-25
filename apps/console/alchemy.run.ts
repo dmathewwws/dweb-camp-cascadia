@@ -17,10 +17,10 @@
 import alchemy from 'alchemy'
 import { Assets, D1Database, Worker } from 'alchemy/cloudflare'
 import { CloudflareStateStore } from 'alchemy/state'
-import { MANAGED_APPS } from '@console-starter/console-shared'
+import { MANAGED_APPS } from '@dweb/console-shared'
 
 // Initialize Alchemy app with remote state store
-const app = await alchemy('console-starter', {
+const app = await alchemy('dweb', {
   stateStore: (scope) => new CloudflareStateStore(scope),
 })
 
@@ -49,7 +49,7 @@ const database = await D1Database(`${app.name}-${app.stage}-db`, {
  * just points at the existing one. This requires every app to live in the same pinned
  * Cloudflare account (see docs/domain-setup.md §3).
  *
- * One Worker binding per `MANAGED_APPS` entry — the registry in `@console-starter/console-shared` is the single
+ * One Worker binding per `MANAGED_APPS` entry — the registry in `@dweb/console-shared` is the single
  * source of truth (including each DB's `databaseId`), shared with server/src/admin-apps.ts.
  * Keep wrangler.toml's dev bindings in sync with it.
  */
@@ -82,7 +82,7 @@ export const worker = await Worker('worker', {
     // Committed literal on purpose — never read this from .env (alchemy deploy loads
     // .env, so a local deploy would push a localhost origin to prod). Left unset in dev
     // (wrangler.toml), which skips the audience check. See docs/secrets.md.
-    ALLOWED_PRODUCTION_ORIGIN: 'https://your-domain.example',
+    ALLOWED_PRODUCTION_ORIGIN: 'https://dweb.dmathewwws.com',
   },
   assets: {
     html_handling: 'auto-trailing-slash',
