@@ -1,5 +1,11 @@
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
+import '@fontsource/unbounded/700.css'
+import '@fontsource/space-grotesk/400.css'
+import '@fontsource/space-grotesk/500.css'
+import '@fontsource/space-grotesk/700.css'
+import '@fontsource/space-mono/400.css'
+import '@fontsource/space-mono/700.css'
 import './index.css'
 import { router } from './routes'
 

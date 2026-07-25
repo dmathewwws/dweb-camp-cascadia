@@ -15,8 +15,17 @@ import { Link } from 'react-router-dom'
 import { AdminSection } from '../components/admin/AdminSection'
 import { syncProfileToDatabase } from '../lib/userApi'
 
-/** Theme the import/export components to match `--color-primary` in index.css. */
-const authStyles = { primaryColor: '#403B51' }
+/** Theme the local-first-auth flows to the paper/ink/acid palette in index.css. */
+const authStyles = {
+  primaryColor: '#131A0F',
+  backgroundColor: '#FFFFFF',
+  textColor: '#131A0F',
+  fontFamily: '"Space Grotesk", sans-serif',
+  buttonRadius: '9999px',
+  inputRadius: '14px',
+  inputBackgroundColor: '#FFFFFF',
+  inputTextColor: '#131A0F',
+}
 
 /** The Local First Auth host bridge, once injected onto `window` (or undefined). */
 function hostApi(): LocalFirstAuth | undefined {
@@ -44,12 +53,12 @@ function SettingsLayout({ children }: { children: React.ReactNode }) {
     <div className="w-full max-w-2xl mx-auto px-4 py-12 sm:py-16">
       <Link
         to="/"
-        className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+        className="inline-flex items-center gap-1 text-sm font-medium text-dim hover:text-ink"
       >
         <span aria-hidden="true">←</span> Back
       </Link>
       <header className="text-center mb-8 sm:mb-10 mt-4">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900">Settings</h1>
+        <h1 className="font-display font-bold text-3xl sm:text-4xl tracking-tight">Settings</h1>
       </header>
       {children}
     </div>
@@ -65,7 +74,7 @@ export function Settings() {
   if (isLoading) {
     return (
       <SettingsLayout>
-        <div className="card p-10 text-center text-gray-500">Loading…</div>
+        <div className="card p-10 text-center text-dim">Loading…</div>
       </SettingsLayout>
     )
   }
@@ -142,13 +151,14 @@ function ProfileSection({ editable }: { editable: boolean }) {
   }, [load])
 
   if (loading) {
-    return <div className="card p-10 text-center text-gray-500">Loading…</div>
+    return <div className="card p-10 text-center text-dim">Loading…</div>
   }
 
   if (mode === 'create') {
     return (
       <div className="card p-6 sm:p-8">
         <Onboarding
+          customStyles={authStyles}
           skipSocialStep={true}
           onComplete={() => {
             setMode('view')
@@ -164,6 +174,7 @@ function ProfileSection({ editable }: { editable: boolean }) {
     return (
       <div className="card p-6 sm:p-8">
         <EditProfile
+          customStyles={authStyles}
           onComplete={() => {
             setMode('view')
             void syncProfileToDatabase() // best-effort upsert into the host DB
@@ -201,7 +212,7 @@ function ProfileSection({ editable }: { editable: boolean }) {
         <div className="flex justify-center">
           <button
             onClick={() => setMode('view')}
-            className="rounded-full px-6 py-2.5 font-semibold text-gray-700 hover:bg-gray-100"
+            className="rounded-full px-6 py-2.5 font-semibold text-ink hover:bg-paper"
           >
             Back
           </button>
@@ -214,15 +225,15 @@ function ProfileSection({ editable }: { editable: boolean }) {
   if (editable && !profile) {
     return (
       <div className="card p-10 text-center">
-        <p className="text-gray-600">You don't have a profile yet.</p>
+        <p className="text-dim">You don't have a profile yet.</p>
         <button onClick={() => setMode('create')} className="btn-primary mt-5 px-6 py-2.5">
           Create your profile
         </button>
-        <p className="mt-4 text-sm text-gray-500">
+        <p className="mt-4 text-sm text-dim">
           Already have a profile?{' '}
           <button
             onClick={() => setMode('import')}
-            className="text-primary hover:text-primary-hover font-semibold underline"
+            className="text-moss hover:text-ink font-semibold underline"
           >
             Import it
           </button>
@@ -234,7 +245,7 @@ function ProfileSection({ editable }: { editable: boolean }) {
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <h2 className="text-2xl font-semibold text-gray-900">Your Profile</h2>
+        <h2 className="font-display font-bold text-xl">Your Profile</h2>
         <ProfileCard
           name={profile?.name ?? 'Unknown'}
           socials={profile?.socials}
@@ -244,19 +255,19 @@ function ProfileSection({ editable }: { editable: boolean }) {
               <>
                 <button
                   onClick={() => setMode('edit')}
-                  className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-50 sm:px-8"
+                  className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold transition-colors hover:bg-paper sm:px-8"
                 >
                   <span>Edit profile</span>
-                  <span aria-hidden="true" className="text-xl text-gray-400">
+                  <span aria-hidden="true" className="text-xl text-dim">
                     →
                   </span>
                 </button>
                 <button
                   onClick={() => setMode('export')}
-                  className="flex w-full items-center justify-between border-t border-gray-200 px-6 py-4 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-50 sm:px-8"
+                  className="flex w-full items-center justify-between border-t border-line px-6 py-4 text-left font-semibold transition-colors hover:bg-paper sm:px-8"
                 >
                   <span>Export profile</span>
-                  <span aria-hidden="true" className="text-xl text-gray-400">
+                  <span aria-hidden="true" className="text-xl text-dim">
                     →
                   </span>
                 </button>
@@ -268,8 +279,8 @@ function ProfileSection({ editable }: { editable: boolean }) {
 
       {editable ? (
         confirmingLogout ? (
-          <div className="space-y-3 border-t border-gray-200 pt-6">
-            <p className="text-gray-700">Are you sure you want to log out?</p>
+          <div className="space-y-3 border-t border-line pt-6">
+            <p className="text-ink">Are you sure you want to log out?</p>
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -285,14 +296,14 @@ function ProfileSection({ editable }: { editable: boolean }) {
               </button>
               <button
                 onClick={() => setConfirmingLogout(false)}
-                className="rounded-full px-6 py-2.5 font-semibold text-gray-700 hover:bg-gray-100"
+                className="rounded-full px-6 py-2.5 font-semibold text-ink hover:bg-paper"
               >
                 Cancel
               </button>
             </div>
           </div>
         ) : (
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-line pt-6">
             <button
               onClick={() => setConfirmingLogout(true)}
               className="rounded-full px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
@@ -303,8 +314,8 @@ function ProfileSection({ editable }: { editable: boolean }) {
         )
       ) : (
         // Read-only native host: no Edit / Log out — the profile is owned by the host.
-        <div className="space-y-4 border-t border-gray-200 pt-6">
-          <p className="text-center text-sm text-gray-500">
+        <div className="space-y-4 border-t border-line pt-6">
+          <p className="text-center text-sm text-dim">
             Your profile lives in the Local First Auth app. To change your name, avatar, or links, edit it there.
           </p>
         </div>
@@ -337,28 +348,28 @@ function ProfileCard({
             <img
               src={avatar}
               alt={name}
-              className="h-16 w-16 rounded-full object-cover ring-1 ring-gray-200"
+              className="h-16 w-16 rounded-full object-cover ring-1 ring-line"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-2xl text-gray-400">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-acid text-2xl text-ink">
               {name.charAt(0).toUpperCase() || '?'}
             </div>
           )}
-          <h2 className="text-2xl font-semibold text-gray-900">{name}</h2>
+          <h2 className="font-display font-bold text-xl">{name}</h2>
         </div>
 
         {socials && socials.length > 0 && (
           <ul className="mt-5 space-y-2">
             {socials.map((s, i) => (
               <li key={i} className="flex items-center gap-2 text-sm">
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-ink">
                   {getPlatformDisplayName(s.platform)}
                 </span>
                 <a
                   href={getFullURL(s.platform, s.handle)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:text-primary-hover underline"
+                  className="text-moss hover:text-ink underline"
                 >
                   {s.handle}
                 </a>
@@ -368,7 +379,7 @@ function ProfileCard({
         )}
       </div>
 
-      {action && <div className="border-t border-gray-200">{action}</div>}
+      {action && <div className="border-t border-line">{action}</div>}
     </div>
   )
 }

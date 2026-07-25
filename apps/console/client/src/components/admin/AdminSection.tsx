@@ -29,15 +29,15 @@ export function AdminSection() {
   const managed = apps.filter((a) => !a.internal)
 
   return (
-    <section className="mt-12 pt-8 border-t border-gray-200">
-      <h2 className="text-2xl font-semibold text-gray-900">Admin</h2>
-      <p className="mt-1 mb-5 text-sm text-gray-500">
+    <section className="mt-12 pt-8 border-t border-line">
+      <h2 className="font-display font-bold text-xl">Admin</h2>
+      <p className="mt-1 mb-5 text-sm text-dim">
         Manage users across mini apps — grant or revoke admin, block, or remove.
       </p>
       {managed.length === 0 ? (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-dim">
           No managed apps registered yet. Register one in{' '}
-          <code className="font-mono">shared/src/apps.ts</code> after deploying it.
+          <code className="font-brand-mono">shared/src/apps.ts</code> after deploying it.
         </p>
       ) : (
         <div className="space-y-4">

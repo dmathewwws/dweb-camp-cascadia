@@ -2,24 +2,56 @@
 
 /* =============================================================================
    Theme Configuration (Tailwind v4 CSS-first approach)
+   Camp directory design: paper / ink / acid / moss palette
    ============================================================================= */
 
 @theme {
-  /* Brand colors */
-  --color-primary: #403B51;
-  --color-primary-hover: #322d40;
+  --color-paper: #F3F8EA;
+  --color-card: #FFFFFF;
+  --color-ink: #131A0F;
+  --color-dim: #5C6B4F;
+  --color-acid: #DCFFAF;
+  --color-acid-deep: #B8F55C;
+  --color-moss: #294420;
+  --color-line: #DCE6CB;
 
-  /* Surface colors */
-  --color-card: white;
-  --color-background: white;
+  --font-display: "Unbounded", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+  --font-brand-mono: "Space Mono", monospace;
 
-  /* Gradient colors for page background */
-  --color-gradient-start: #faf5ff; /* purple-50 */
-  --color-gradient-end: #eff6ff;   /* blue-50 */
+  --radius-card: 20px;
+  --radius-field: 14px;
+}
 
-  /* QR panel gradient */
-  --color-qr-gradient-start: #e0e7ff; /* indigo-100 */
-  --color-qr-gradient-end: #f3e8ff;   /* purple-100 */
+@layer base {
+  body {
+    @apply font-body bg-paper text-ink;
+  }
+
+  /* subtle root-thread texture on the page background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(184, 245, 92, 0.14), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(184, 245, 92, 0.10), transparent 40%);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-acid-deep);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
 }
 
 /* =============================================================================
@@ -27,14 +59,27 @@
    ============================================================================= */
 
 @layer components {
-  /* Primary button - brand color with hover effects */
-  .btn-primary {
-    @apply bg-primary text-white rounded-full shadow-lg
-           hover:bg-primary-hover transition-all hover:scale-105 font-semibold;
+  /* mono uppercase micro-label (wordmark, section labels) */
+  .mono-label {
+    @apply font-brand-mono text-[11px] uppercase text-moss;
+    letter-spacing: 0.12em;
   }
 
-  /* Card container */
+  /* white card with hairline border */
   .card {
-    @apply bg-card rounded-lg shadow-lg;
+    @apply bg-card border-[1.5px] border-line rounded-[20px];
+  }
+
+  /* text input */
+  .field-input {
+    @apply w-full text-base px-4 py-3.5 border-[1.5px] border-line
+           rounded-[14px] bg-card placeholder:text-[#9AA88C]
+           focus:outline-none focus:border-ink;
+  }
+
+  /* primary pill button (also themes shared admin components) */
+  .btn-primary {
+    @apply bg-ink text-acid rounded-full font-semibold
+           hover:opacity-90 transition-all;
   }
 }

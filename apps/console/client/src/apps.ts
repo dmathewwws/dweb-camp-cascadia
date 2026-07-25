@@ -24,8 +24,6 @@ export interface MiniApp {
   path: string
   /** Emoji or short glyph used as the card icon. */
   icon: string
-  /** Tailwind gradient classes for the card's icon tile accent. */
-  accent: string
   /**
    * When true, this card is a route served by the host itself (e.g. /settings),
    * so it links via client-side routing instead of a cross-document navigation.
@@ -37,10 +35,25 @@ export const apps: MiniApp[] = [
   {
     slug: 'people',
     name: 'People',
-    description: 'A directory of campers at camp.',
+    description: 'A directory of campers and their interests.',
     path: '/people/',
     icon: '👥',
-    accent: 'from-blue-400 to-blue-300',
+    internal: false,
+  },
+  {
+    slug: 'photos',
+    name: 'Photos',
+    description: 'A gallery of photos from camp.',
+    path: '/photos/',
+    icon: '📸',
+    internal: false,
+  },
+  {
+    slug: 'schedule',
+    name: 'Schedule',
+    description: 'A schedule of activities at camp.',
+    path: 'https://camp-cfp.daff.workers.dev/schedule',
+    icon: '📅',
     internal: false,
   },
   {
@@ -49,7 +62,6 @@ export const apps: MiniApp[] = [
     description: 'Create or edit your profile.',
     path: '/settings',
     icon: '⚙️',
-    accent: 'from-slate-400 to-slate-300',
     internal: true,
   },
 ]

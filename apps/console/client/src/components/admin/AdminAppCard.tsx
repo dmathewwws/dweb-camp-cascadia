@@ -68,10 +68,10 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
         <span className="text-2xl" aria-hidden="true">
           {app.icon}
         </span>
-        <h3 className="text-lg font-semibold text-gray-900">{app.name}</h3>
+        <h3 className="text-lg font-bold">{app.name}</h3>
         <button
           onClick={load}
-          className="ml-auto text-sm text-gray-400 hover:text-gray-700"
+          className="ml-auto text-sm text-dim hover:text-ink"
           title="Refresh"
         >
           ↻
@@ -82,12 +82,12 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
         <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
       )}
 
-      {status === 'loading' && <p className="mt-4 text-sm text-gray-500">Loading…</p>}
+      {status === 'loading' && <p className="mt-4 text-sm text-dim">Loading…</p>}
 
       {status === 'error' && (
-        <p className="mt-4 text-sm text-gray-500">
+        <p className="mt-4 text-sm text-dim">
           Admin API unavailable for {app.name}.{' '}
-          <button onClick={load} className="text-primary hover:text-primary-hover underline">
+          <button onClick={load} className="text-moss hover:text-ink underline">
             Retry
           </button>
         </p>
@@ -96,21 +96,21 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
       {(status === 'loaded' || status === 'empty') && (
         <>
           {status === 'empty' ? (
-            <p className="mt-4 text-sm text-gray-500">No users yet.</p>
+            <p className="mt-4 text-sm text-dim">No users yet.</p>
           ) : (
-            <ul className="mt-4 divide-y divide-gray-100">
+            <ul className="mt-4 divide-y divide-line">
               {users.map((u) => (
                 <li key={u.did} className="flex items-center gap-3 py-2.5">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">
+                    <p className="truncate text-sm font-medium">
                       {u.name || 'Unnamed'}
                       {u.isAdmin && (
-                        <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                        <span className="ml-2 rounded-full bg-acid px-2 py-0.5 text-xs font-semibold text-ink">
                           admin
                         </span>
                       )}
                     </p>
-                    <p className="truncate font-mono text-xs text-gray-400" title={u.did}>
+                    <p className="truncate font-brand-mono text-xs text-dim" title={u.did}>
                       {shortDid(u.did)}
                     </p>
                   </div>
@@ -119,7 +119,7 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
                       <button
                         disabled={busy === u.did}
                         onClick={() => act(u.did, () => adminApi.revokeAdmin(app.slug, u.did))}
-                        className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                        className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper disabled:opacity-50"
                       >
                         Revoke admin
                       </button>
@@ -135,7 +135,7 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
                     <button
                       disabled={busy === u.did}
                       onClick={() => act(u.did, () => adminApi.blockUser(app.slug, u.did))}
-                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                      className="rounded-full px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper disabled:opacity-50"
                     >
                       Block
                     </button>
@@ -157,7 +157,7 @@ export function AdminAppCard({ app }: { app: MiniApp }) {
               value={newDid}
               onChange={(e) => setNewDid(e.target.value)}
               placeholder="did:key:z… — make admin by DID"
-              className="min-w-0 flex-1 rounded-full border border-gray-200 px-4 py-1.5 text-sm focus:border-primary focus:outline-none"
+              className="min-w-0 flex-1 rounded-full border-[1.5px] border-line bg-card px-4 py-1.5 text-sm placeholder:text-[#9AA88C] focus:border-ink focus:outline-none"
             />
             <button
               type="submit"

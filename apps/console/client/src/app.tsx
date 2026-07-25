@@ -8,7 +8,7 @@ import { Footer } from './components/Footer'
  */
 export function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gradient-start to-gradient-end">
+    <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         <Outlet />
       </main>
