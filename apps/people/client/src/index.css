@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   Theme Configuration (Tailwind v4 CSS-first approach)
+   Camp directory design: paper / ink / acid / moss palette
+   ============================================================================= */
+
+@theme {
+  --color-paper: #F3F8EA;
+  --color-card: #FFFFFF;
+  --color-ink: #131A0F;
+  --color-dim: #5C6B4F;
+  --color-acid: #DCFFAF;
+  --color-acid-deep: #B8F55C;
+  --color-moss: #294420;
+  --color-line: #DCE6CB;
+
+  --font-display: "Unbounded", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
+  --font-brand-mono: "Space Mono", monospace;
+
+  --radius-card: 20px;
+  --radius-field: 14px;
+}
+
+@layer base {
+  body {
+    @apply font-body bg-paper text-ink;
+  }
+
+  /* subtle root-thread texture on the page background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(184, 245, 92, 0.14), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(184, 245, 92, 0.10), transparent 40%);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-acid-deep);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+/* =============================================================================
+   Component Patterns
+   ============================================================================= */
+
+@layer components {
+  /* mono uppercase micro-label (field labels, group labels, section headers) */
+  .mono-label {
+    @apply font-brand-mono text-[11px] uppercase text-moss;
+    letter-spacing: 0.12em;
+  }
+
+  /* selectable pill chip (tag picker + directory filters) */
+  .chip {
+    @apply font-brand-mono text-[12.5px] leading-none px-[13px] py-[9px]
+           rounded-full border-[1.5px] border-line bg-card text-ink
+           inline-flex items-center gap-1.5 select-none cursor-pointer
+           transition-[background-color,border-color,transform] duration-150
+           active:scale-[0.96];
+  }
+  .chip-on {
+    @apply bg-acid border-ink;
+  }
+  .chip-on::before {
+    content: "✳";
+    font-size: 10px;
+  }
+
+  /* small tag labels on cards and the profile sheet */
+  .tag {
+    @apply font-brand-mono text-[10.5px] px-2 py-1 rounded-md
+           bg-[#EEF4E2] text-moss;
+  }
+  .tag-shared {
+    @apply bg-acid text-ink font-bold;
+  }
+  .tag-more {
+    @apply bg-transparent border border-dashed border-line text-dim;
+  }
+
+  /* full-width primary call-to-action pill */
+  .cta {
+    @apply w-full py-[17px] rounded-full bg-ink text-acid font-bold text-base
+           flex items-center justify-center gap-2
+           transition-[opacity,transform] duration-150 active:scale-[0.98]
+           disabled:opacity-35 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  /* white card with hairline border */
+  .card {
+    @apply bg-card border-[1.5px] border-line rounded-[20px];
+  }
+  .card-kindred {
+    border-color: var(--color-acid-deep);
+    box-shadow: 0 0 0 3px rgba(184, 245, 92, 0.25);
+  }
+
+  /* text input in the check-in form / search bars */
+  .field-input {
+    @apply w-full text-base px-4 py-3.5 border-[1.5px] border-line
+           rounded-[14px] bg-card placeholder:text-[#9AA88C]
+           focus:outline-none focus:border-ink;
+  }
+
+  /* kept for AdminSection until restyled */
+  .btn-primary {
+    @apply bg-ink text-acid rounded-full shadow-lg
+           hover:opacity-90 transition-all font-semibold;
+  }
+}
+
+@layer utilities {
+  .live-dot::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-acid-deep);
+    display: inline-block;
+    animation: pulse 2.4s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(184, 245, 92, 0.55); }
+    50% { box-shadow: 0 0 0 6px rgba(184, 245, 92, 0); }
+  }
+}

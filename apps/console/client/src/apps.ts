@@ -35,6 +35,15 @@ export interface MiniApp {
 
 export const apps: MiniApp[] = [
   {
+    slug: 'people',
+    name: 'People',
+    description: 'A directory of campers at camp.',
+    path: '/people/',
+    icon: '👥',
+    accent: 'from-blue-400 to-blue-300',
+    internal: false,
+  },
+  {
     slug: 'settings',
     name: 'Settings',
     description: 'Create or edit your profile.',

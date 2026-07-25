@@ -1,0 +1,9 @@
+{
+  "name": "People",
+  "description": "A People mini app",
+  "icon": "./icon.webp",
+  "type": "app",
+  "permissions": [
+    "profile"
+  ]
+}
