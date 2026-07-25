@@ -1,0 +1,9 @@
+{
+  "name": "ROLL",
+  "description": "One shared film roll for DWeb Camp Cascadia — Aug 6–9, 2026",
+  "icon": "./icon.webp",
+  "type": "event",
+  "permissions": [
+    "profile"
+  ]
+}

@@ -1,0 +1,57 @@
+# This is used in development only (Alchemy is used for production deployments).
+# dweb-photos-mini-app and photos are replaced with real values by `pnpm new-app`.
+
+name = "dweb-photos-mini-app-dev"
+main = "server/src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "dweb-photos-mini-app-dev-db"
+database_id = "local"
+
+# Durable Object binding
+[[durable_objects.bindings]]
+name = "DURABLE_OBJECT"
+class_name = "Broadcaster"
+script_name = "dweb-photos-mini-app-dev"
+
+# Durable Object migration
+[[migrations]]
+tag = "v1"
+new_classes = ["Broadcaster"]
+
+# R2 bucket for camp photos. wrangler dev --local simulates this on disk.
+# The R2_* presign credentials are deliberately NOT in [secrets] required:
+# their absence in dev switches /api/request-uploads to worker-relative
+# /api/dev-upload/* URLs that write through this binding (see server/src/r2.ts).
+[[r2_buckets]]
+binding = "PHOTOS_BUCKET"
+bucket_name = "dweb-photos-mini-app-dev-photos"
+
+# Static assets (client build)
+# In dev: Vite serves client at :5173 (this is unused)
+# In production: Alchemy uploads these assets to Workers
+# [site]
+# bucket = "./client/dist"
+
+# Secrets required by the Worker (uncomment when you add your first secret).
+# In local dev, wrangler dev loads ONLY these keys from `.env` into c.env,
+# keeping deploy creds (ALCHEMY_STATE_TOKEN etc.) out of the app runtime.
+# Missing keys log a warning; dev stays runnable. NEVER create a .dev.vars
+# file — its presence makes wrangler dev ignore .env entirely.
+# [secrets]
+# required = ["MY_SECRET"]
+
+# ALLOWED_PRODUCTION_ORIGIN is the prod origin only — set it in alchemy.run.ts, and
+# leave it unset here so the JWT audience check is skipped in dev. Each scaffolded app
+# gets its own port pair (5174/8788, 5175/8789, …), which a hardcoded localhost value
+# wouldn't match. Uncomment below only to pin the check to one local port on purpose.
+[vars]
+# ALLOWED_PRODUCTION_ORIGIN = "http://localhost:5173"
+
+# Dev server configuration
+[dev]
+port = 8789

@@ -6,6 +6,9 @@
     },
     {
       "path": "./apps/people"
+    },
+    {
+      "path": "./apps/photos"
     }
   ]
 }
