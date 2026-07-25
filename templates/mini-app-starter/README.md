@@ -7,13 +7,7 @@ are already wired.
 
 ## Everyday commands
 
-From the workspace root:
-
-```bash
-pnpm dev:__SLUG__                                        # worker + vite dev servers
-```
-
-From this directory (or via `pnpm --filter @<workspace>/__SLUG__ run …` at the root):
+From this directory (`apps/__SLUG__`):
 
 ```bash
 pnpm dev                     # dev servers (real QR-code sign-in)
@@ -40,9 +34,9 @@ pnpm exec alchemy configure  # one-time Cloudflare API token setup (alchemy is a
 pnpm run deploy:cloudflare
 ```
 
-Routes on the shared domain attach automatically once `ALLOWED_ORIGIN` in
+Routes on the shared domain attach automatically once `ALLOWED_PRODUCTION_ORIGIN` in
 `alchemy.run.ts` is your real domain — set it once for every app from the workspace
-root: `pnpm setup-project --allowed-origin https://your.domain`.
+root: `pnpm setup-project --allowed-production-origin https://your.domain`.
 
 After the first deploy, register the app with the host console (landing-grid card +
 admin bindings): follow **"Register with the host console"** in

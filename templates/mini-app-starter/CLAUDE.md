@@ -84,10 +84,10 @@ This is a pnpm workspace monorepo with three packages:
 
 ### Development Commands
 
-All commands run from the workspace root:
+All commands run from this app's directory:
 
 ```bash
-pnpm install              # Install all workspace dependencies
+pnpm install              # Install all workspace dependencies (any directory works)
 pnpm run dev              # Start dev server (no simulator)
 pnpm run dev:simulator    # Start dev server with Local First Auth Simulator
 pnpm run dev:client       # Start only client dev server (no simulator)

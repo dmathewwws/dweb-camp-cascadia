@@ -82,7 +82,7 @@ export const worker = await Worker('worker', {
     // Committed literal on purpose — never read this from .env (alchemy deploy loads
     // .env, so a local deploy would push a localhost origin to prod). Left unset in dev
     // (wrangler.toml), which skips the audience check. See docs/secrets.md.
-    ALLOWED_ORIGIN: 'https://your-domain.example',
+    ALLOWED_PRODUCTION_ORIGIN: 'https://your-domain.example',
   },
   assets: {
     html_handling: 'auto-trailing-slash',

@@ -38,7 +38,7 @@ prerequisite) and [`docs/hosting-a-mini-app.md`](./docs/hosting-a-mini-app.md)
 
 - `src/index.ts` — Hono router: profile endpoints + admin API (tables below)
 - `src/admin-apps.ts` — resolves a managed app slug to its bound D1 (`dbForSlug`)
-- `src/types.ts` — `Env`: host `DB`, `ALLOWED_ORIGIN`, plus one binding per
+- `src/types.ts` — `Env`: host `DB`, `ALLOWED_PRODUCTION_ORIGIN`, plus one binding per
   `ChildBindingKey`
 - `src/db/` — Drizzle schema, models, migrations for the host's own D1
 
@@ -59,8 +59,6 @@ pnpm build            # build shared, then client
 pnpm db:run-migrations       # migrate the local host D1
 pnpm db:generate-migrations  # regenerate migrations from schema changes
 ```
-
-(From the repo root, use `pnpm dev:console` or `--filter` equivalents.)
 
 ## API Reference
 
@@ -120,7 +118,7 @@ via Alchemy's `migrationsDir`.
 Auth uses the Local First Auth spec (full spec:
 [`../../docs/local-first-auth-spec.md`](../../docs/local-first-auth-spec.md)): the
 browser injects `window.localFirstAuth`, identity is a `did:key`, and API calls carry
-short-lived EdDSA JWTs verified by `shared/src/jwt.ts` against `ALLOWED_ORIGIN`
+short-lived EdDSA JWTs verified by `shared/src/jwt.ts` against `ALLOWED_PRODUCTION_ORIGIN`
 (prod only — it's unset in dev, which skips the audience check).
 
 Auth states in the client (`useLocalFirstAuth()`):
@@ -136,17 +134,17 @@ Auth states in the client (`useLocalFirstAuth()`):
 `alchemy.run.ts` deploys the Worker + host D1 + managed-app bindings
 (`pnpm deploy:cloudflare`). `wrangler.toml` is **dev-only**. The `<domain>/*` route is
 attached manually in the Cloudflare dashboard (path routing needs a real zone — see
-[`docs/domain-setup.md`](./docs/domain-setup.md)). `ALLOWED_ORIGIN` prod value is a
-committed literal in `alchemy.run.ts` on purpose (see
+[`docs/domain-setup.md`](./docs/domain-setup.md)). The `ALLOWED_PRODUCTION_ORIGIN`
+value is a committed literal in `alchemy.run.ts` on purpose (see
 [`docs/secrets.md`](./docs/secrets.md)) — replace `https://your-domain.example` with
-your domain (or run `pnpm setup-project --allowed-origin https://your.domain` from
-the repo root).
+your domain (or run `pnpm setup-project --allowed-production-origin https://your.domain`
+from the repo root).
 
 ## Troubleshooting
 
 - **JWT verification failures** — expired token, invalid signature, malformed DID
   (must start with `did:key:z`), or (prod only) the JWT's `aud` doesn't match
-  `ALLOWED_ORIGIN`
+  `ALLOWED_PRODUCTION_ORIGIN`
 - **Admin section not showing** — the caller's DID isn't flagged `is_admin` in the
   *host's* D1 ([`docs/admin-setup.md`](./docs/admin-setup.md))
 - **"Unknown app" from admin endpoints** — slug not in `MANAGED_APPS`, or the dev

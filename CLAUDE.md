@@ -26,18 +26,22 @@ Title Case. Scripts derive from it — never hardcode the project name.
 
 ```bash
 pnpm install
-pnpm dev:console            # host console (worker :8787, vite :5173)
-pnpm dev:<slug>             # a scaffolded app (script added by new-app)
 pnpm build                  # build every app
 pnpm typecheck              # tsc -b every app
 pnpm new-app <slug>         # scaffold a mini app from the template
-pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]
+pnpm setup-project [name] [--allowed-production-origin <url>] [--github-url <url>]
                             # rename the workspace + optional prod settings
 ```
 
-Per-app commands go through a filter: `pnpm --filter @<workspace>/<slug> run <script>`
-(e.g. `db:generate-migrations`, `db:run-migrations`, `dev:simulator`,
-`deploy:cloudflare`).
+Per-app commands run from inside the app's directory (`cd apps/<slug>`):
+
+```bash
+pnpm dev                    # worker + vite (console: worker :8787, vite :5173)
+pnpm dev:simulator          # same, with a fake signed-in user (no phone needed)
+pnpm run db:generate-migrations / db:run-migrations / deploy:cloudflare
+```
+
+(`pnpm --filter @<workspace>/<slug> run <script>` also works from the root.)
 
 ## Project Setup (Claude: Follow These Instructions)
 
@@ -48,8 +52,8 @@ Run: `pnpm setup-project {kebab-case-name}` (defaults to the repo directory name
 rewrites the package scope, Cloudflare resource names, and display strings from the
 current workspace name to the new one, reinstalls, and migrates the console's local D1
 (fully local — dev D1 ids are just local storage keys, no Cloudflare auth needed).
-Optional flags: `--allowed-origin <url>` sets the production `ALLOWED_ORIGIN` in every
-`apps/*/alchemy.run.ts`, and `--github-url <url>` points each app's footer link
+Optional flags: `--allowed-production-origin <url>` sets `ALLOWED_PRODUCTION_ORIGIN`
+in every `apps/*/alchemy.run.ts`, and `--github-url <url>` points each app's footer link
 (`apps/*/client/src/components/Footer.tsx`) at the user's fork; a flags-only run
 leaves the name unchanged. Both flags also update `templates/mini-app-starter`, so
 apps scaffolded later by `new-app` inherit the values — set them once, never twice.
@@ -61,8 +65,8 @@ apps bake in the workspace name.
 
 1. `pnpm new-app <slug>` — scaffolds `apps/<slug>` fully wired for `/<slug>/` subpath
    serving (Vite base + proxy, router basename, Hono basePath, Alchemy routes), claims
-   ports, wires root tsconfig/scripts, installs, and runs the app's local migrations.
-   `pnpm dev:<slug>` works immediately.
+   ports, wires the root tsconfig, installs, and runs the app's local migrations.
+   `cd apps/<slug> && pnpm dev` works immediately.
 2. Build the app's features inside `apps/<slug>` (see its own `CLAUDE.md`, copied from
    the template).
 3. After its first deploy, register it with the host console (needs the real prod D1
@@ -76,7 +80,7 @@ Users sign in by scanning a QR code with Antler Browser, which injects
 `window.localFirstAuth`; identity is a `did:key` and requests carry short-lived EdDSA
 JWTs verified server-side by each app's `shared/src/jwt.ts` (`decodeAndVerifyJWT`,
 checks signature + expiry + allowed origin). Local dev without a phone:
-`pnpm --filter @<workspace>/<app> run dev:simulator`. Full spec:
+`cd apps/<app> && pnpm dev:simulator`. Full spec:
 `docs/local-first-auth-spec.md`.
 
 ## More docs

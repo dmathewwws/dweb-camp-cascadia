@@ -33,7 +33,7 @@ monorepo changes how they're developed, not how they ship.
    ```bash
    pnpm install
    pnpm setup-project my-space \
-     --allowed-origin https://my.domain \
+     --allowed-production-origin https://my.domain \
      --github-url https://github.com/you/your-fork
    ```
 
@@ -41,18 +41,19 @@ monorepo changes how they're developed, not how they ship.
    (`my-space-dev`, `my-space-dev-db`), and display strings ("Welcome to My Space")
    in one shot, then migrates the console's local D1 (fully local — no Cloudflare
    account needed) and prints a checklist of anything left. The flags are optional:
-   `--allowed-origin` sets the production auth origin in each app's `alchemy.run.ts`
-   (skip it until you have a domain), and `--github-url` points each app's footer
-   link at your fork. Everything is safe to re-run later — the name defaults to the
-   repo directory, and a flags-only run leaves the name alone.
+   `--allowed-production-origin` sets the production auth origin in each app's
+   `alchemy.run.ts` (skip it until you have a domain), and `--github-url` points each
+   app's footer link at your fork. Everything is safe to re-run later — the name
+   defaults to the repo directory, and a flags-only run leaves the name alone.
 
    Run `setup-project` **before** scaffolding any apps — `new-app` bakes the
    workspace name into everything it generates.
 3. Run the host console:
 
    ```bash
-   pnpm dev:console                # worker :8787, vite :5173
-   pnpm --filter @my-space/console run dev:simulator   # …with a fake signed-in user
+   cd apps/console
+   pnpm dev             # worker :8787, vite :5173
+   pnpm dev:simulator   # …with a fake signed-in user
    ```
 
 Requires Node >= 22 (`.nvmrc`) and pnpm 10.
@@ -61,17 +62,16 @@ Requires Node >= 22 (`.nvmrc`) and pnpm 10.
 
 | Command | What it does |
 |---|---|
-| `pnpm dev:console` | Run the host console (worker :8787, vite :5173) |
-| `pnpm dev:<slug>` | Run a scaffolded mini app (added by `new-app`) |
-| `pnpm --filter @my-space/<app> run dev:simulator` | Run an app with a fake signed-in user — the only way to sign in without a phone |
-| `pnpm build` | Build every app |
-| `pnpm typecheck` | Typecheck every app |
+| `cd apps/<app> && pnpm dev` | Run an app (console is worker :8787, vite :5173) |
+| `cd apps/<app> && pnpm dev:simulator` | Run an app with a fake signed-in user — the only way to sign in without a phone |
+| `pnpm build` | Build every app (from the root) |
+| `pnpm typecheck` | Typecheck every app (from the root) |
 | `pnpm new-app <slug>` | Scaffold a new mini app |
-| `pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]` | Rename the workspace / set the prod origin + footer repo link |
+| `pnpm setup-project [name] [--allowed-production-origin <url>] [--github-url <url>]` | Rename the workspace / set the prod origin + footer repo link |
 
 Each app claims its own worker + vite port pair (console is 8787/5173, the next app
-gets 8788/5174, and so on), so you can run several at once. Anything app-specific goes
-through a filter, e.g. `pnpm --filter @my-space/check-in run db:generate-migrations`.
+gets 8788/5174, and so on). Anything app-specific runs from the app's directory,
+e.g. `cd apps/check-in && pnpm run db:generate-migrations`.
 
 ## Adding a mini app
 
@@ -83,8 +83,8 @@ This copies `templates/mini-app-starter` into `apps/check-in`, rescopes its pack
 `@<workspace>/check-in-*`, names its Cloudflare resources
 `<workspace>-check-in-mini-app`, claims a free port pair, wires the full `/check-in/`
 subpath serving (Vite base + proxy, router basename, Hono basePath, Alchemy routes),
-adds the root tsconfig + `dev:check-in` script, installs, and runs the app's local D1
-migrations. `pnpm dev:check-in` works immediately.
+adds the root tsconfig reference, installs, and runs the app's local D1 migrations.
+`cd apps/check-in && pnpm dev` works immediately.
 
 It ends with a short checklist; the one genuinely manual step is **registering the app
 with the host console** after its first deploy (needs the real prod D1 UUID) — follow
@@ -97,18 +97,19 @@ Apps deploy independently to Cloudflare's free tier:
 
 ```bash
 # once per app: deploy credentials (alchemy is an app-level devDep, not a root one)
-cp apps/console/.env.example apps/console/.env          # fill in CLOUDFLARE_ACCOUNT_ID + ALCHEMY_STATE_TOKEN
-pnpm --filter @my-space/console exec alchemy configure  # once: Cloudflare API token
+cd apps/console
+cp .env.example .env          # fill in CLOUDFLARE_ACCOUNT_ID + ALCHEMY_STATE_TOKEN
+pnpm exec alchemy configure   # once: Cloudflare API token
 
-pnpm --filter @my-space/console run deploy:cloudflare   # per app: build + deploy
+pnpm run deploy:cloudflare    # per app: build + deploy
 ```
 
 Path-based routing (`<domain>/<slug>/*`) needs a real Cloudflare zone — a custom
 domain, not `*.workers.dev`. Set that up per
 [`apps/console/docs/domain-setup.md`](apps/console/docs/domain-setup.md), attach the
 host's `<domain>/*` route in the dashboard, and replace the
-`https://your-domain.example` placeholder in each app's `alchemy.run.ts`
-(or run `pnpm setup-project --allowed-origin https://your.domain` from the root).
+`https://your-domain.example` placeholder in each app's `alchemy.run.ts` (or run
+`pnpm setup-project --allowed-production-origin https://your.domain` from the root).
 
 ## Secrets & env vars
 
@@ -116,8 +117,8 @@ Every app follows one convention, sorted by one question — does the value diff
 between local dev and prod? Same-everywhere values (secrets and non-secrets) live in
 `.env`, read by the wrangler `[secrets]` gate in dev and `alchemy.(secret.)env`
 bindings at deploy; environment-differing values are committed literals in
-`alchemy.run.ts` for prod (e.g. `ALLOWED_ORIGIN`, which stays unset in dev so the JWT
-audience check is skipped); infra creds stay in `.env` and are
+`alchemy.run.ts` for prod (e.g. `ALLOWED_PRODUCTION_ORIGIN`, which stays unset in dev
+so the JWT audience check is skipped); infra creds stay in `.env` and are
 never bound to the Worker. The canonical doc is
 [`templates/mini-app-starter/docs/secrets.md`](templates/mini-app-starter/docs/secrets.md);
 each app's `docs/secrets.md` applies it to that app.

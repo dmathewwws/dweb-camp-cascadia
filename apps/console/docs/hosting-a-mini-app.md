@@ -100,8 +100,8 @@ export const worker = await Worker('worker', {
 
 The two patterns matter: `/guestbook` (no trailing slash, the entry link) and
 `/guestbook/*` (assets + in-app routes). Template-scaffolded apps derive these from
-`ALLOWED_ORIGIN` automatically once it is set to the real domain
-(`pnpm setup-project --allowed-origin https://your.domain`).
+`ALLOWED_PRODUCTION_ORIGIN` automatically once it is set to the real domain
+(`pnpm setup-project --allowed-production-origin https://your.domain`).
 
 ### 6. Manifest
 
@@ -116,7 +116,7 @@ all in `apps/console`, then redeploy the host:
 ### 1. Get the app's prod D1 UUID
 
 ```bash
-pnpm --filter @<workspace>/guestbook exec wrangler d1 list
+cd apps/guestbook && pnpm exec wrangler d1 list
 # note the uuid of <workspace>-guestbook-mini-app-prod-db
 ```
 
@@ -166,7 +166,7 @@ child's live dev data.
 ### 5. Redeploy the host
 
 ```bash
-pnpm --filter @<workspace>/console run deploy:cloudflare
+cd apps/console && pnpm run deploy:cloudflare
 ```
 
 ## Admin console requirements for the child app

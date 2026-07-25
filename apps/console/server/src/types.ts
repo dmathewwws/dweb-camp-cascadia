@@ -24,5 +24,5 @@ export type Env = {
    * a per-origin key, so a JWT minted at another origin carries a different DID —
    * reject it (see shared/src/jwt.ts).
    */
-  ALLOWED_ORIGIN?: string
+  ALLOWED_PRODUCTION_ORIGIN?: string
 } & Record<ChildBindingKey, D1Database>

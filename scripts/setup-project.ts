@@ -2,7 +2,7 @@
 /**
  * Set up the workspace — run this once after forking the template.
  *
- *   pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]
+ *   pnpm setup-project [name] [--allowed-production-origin <url>] [--github-url <url>]
  *
  * `name` defaults to the repo directory name, except when only flags are passed —
  * then the current name is kept so a flags-only run never triggers a rename.
@@ -15,7 +15,7 @@
  * scaffolded extra apps, and can even reverse itself
  * (`pnpm setup-project console-starter` restores the template naming).
  *
- * --allowed-origin sets the production ALLOWED_ORIGIN literal in every
+ * --allowed-production-origin sets the ALLOWED_PRODUCTION_ORIGIN literal in every
  * `apps/<app>/alchemy.run.ts`; --github-url points the footer's open-source link
  * (`apps/<app>/client/src/components/Footer.tsx`) at your fork. Both match whatever
  * value is currently there, so they are also re-runnable and reversible. Both are
@@ -29,7 +29,7 @@
  *
  * It also runs the host console's local D1 migrations (fully local via
  * getPlatformProxy — no Cloudflare auth; the dev database_id is just a local
- * storage key). It does NOT touch `wrangler.toml` vars (ALLOWED_ORIGIN is unset in
+ * storage key). It does NOT touch `wrangler.toml` vars (ALLOWED_PRODUCTION_ORIGIN is unset in
  * dev on purpose, so the audience check is skipped). It ends with a short
  * checklist of only the steps it could not do for you.
  */
@@ -53,7 +53,7 @@ const SKIP = new Set([
 /** Files we rewrite text inside of. */
 const TEXT_EXT = new Set(['.ts', '.tsx', '.json', '.toml', '.md', '.html', '.css', '.yaml'])
 
-const USAGE = 'Usage: pnpm setup-project [name] [--allowed-origin <url>] [--github-url <url>]'
+const USAGE = 'Usage: pnpm setup-project [name] [--allowed-production-origin <url>] [--github-url <url>]'
 
 function die(msg: string): never {
   console.error(`\n✖ ${msg}\n`)
@@ -62,12 +62,12 @@ function die(msg: string): never {
 
 // ── args ────────────────────────────────────────────────────────────────────
 let positionals: string[]
-let flags: { 'allowed-origin'?: string; 'github-url'?: string }
+let flags: { 'allowed-production-origin'?: string; 'github-url'?: string }
 try {
   ;({ positionals, values: flags } = parseArgs({
     args: process.argv.slice(2),
     options: {
-      'allowed-origin': { type: 'string' },
+      'allowed-production-origin': { type: 'string' },
       'github-url': { type: 'string' },
     },
     allowPositionals: true,
@@ -76,12 +76,12 @@ try {
   die(`${(e as Error).message}\n  ${USAGE}`)
 }
 
-const allowedOrigin = flags['allowed-origin']?.trim()
+const allowedProductionOrigin = flags['allowed-production-origin']?.trim()
 const githubUrl = flags['github-url']?.trim().replace(/\.git$/, '').replace(/\/+$/, '')
 
 /** The origin is `scheme://host[:port]` — reject paths, trailing slashes, garbage. */
 function parseOrigin(raw: string): string {
-  if (!raw) die(`--allowed-origin is empty.\n  ${USAGE}`)
+  if (!raw) die(`--allowed-production-origin is empty.\n  ${USAGE}`)
   let url: URL
   try {
     url = new URL(raw)
@@ -100,14 +100,14 @@ function parseOrigin(raw: string): string {
   return raw
 }
 
-const originValue = allowedOrigin ? parseOrigin(allowedOrigin) : undefined
+const productionOriginValue = allowedProductionOrigin ? parseOrigin(allowedProductionOrigin) : undefined
 
 if (githubUrl && !/^https:\/\/github\.com\/[^/\s]+\/[^/\s]+$/.test(githubUrl)) {
   die(`--github-url must look like https://github.com/owner/repo (got "${githubUrl}")`)
 }
 
 const current = getWorkspaceName()
-const flagsOnly = positionals.length === 0 && (originValue !== undefined || githubUrl !== undefined)
+const flagsOnly = positionals.length === 0 && (productionOriginValue !== undefined || githubUrl !== undefined)
 const next = flagsOnly ? current : (positionals[0]?.trim() || path.basename(REPO_ROOT)).toLowerCase()
 const renameNeeded = current !== next
 
@@ -125,7 +125,7 @@ if (renameNeeded) {
   }
 }
 
-if (!renameNeeded && !originValue && !githubUrl) {
+if (!renameNeeded && !productionOriginValue && !githubUrl) {
   console.log(`\n✅ Project is already named "${next}" — nothing to rename.`)
   // Still make sure the console's local D1 is migrated (idempotent, no auth) so a
   // fresh clone whose name already matches ends up runnable too.
@@ -231,20 +231,20 @@ function setInAppFiles(
   return changed
 }
 
-// Matches both forms: the console's inline binding (`ALLOWED_ORIGIN: '…',`) and
-// the template's hoisted const (`const ALLOWED_ORIGIN = '…'`).
-const ORIGIN_LINE_RE = /^(\s*(?:const\s+)?ALLOWED_ORIGIN\s*[:=]\s*)(['"])[^'"\n]*\2/m
+// Matches both forms: the console's inline binding (`ALLOWED_PRODUCTION_ORIGIN: '…',`) and
+// the template's hoisted const (`const ALLOWED_PRODUCTION_ORIGIN = '…'`).
+const ORIGIN_LINE_RE = /^(\s*(?:const\s+)?ALLOWED_PRODUCTION_ORIGIN\s*[:=]\s*)(['"])[^'"\n]*\2/m
 const GITHUB_HREF_RE = /href="https:\/\/github\.com\/[^"]*"/
 
 let originChanged = 0
-if (originValue) {
-  console.log(`\n🌐 Setting production ALLOWED_ORIGIN\n`)
+if (productionOriginValue) {
+  console.log(`\n🌐 Setting ALLOWED_PRODUCTION_ORIGIN\n`)
   originChanged = setInAppFiles(
     'alchemy.run.ts',
     ORIGIN_LINE_RE,
-    originValue,
-    (m) => `${m[1]}${m[2]}${originValue}${m[2]}`,
-    'ALLOWED_ORIGIN',
+    productionOriginValue,
+    (m) => `${m[1]}${m[2]}${productionOriginValue}${m[2]}`,
+    'ALLOWED_PRODUCTION_ORIGIN',
   )
 }
 
@@ -288,11 +288,10 @@ function migrateConsoleDb(): boolean {
 // ── report ──────────────────────────────────────────────────────────────────
 /** Done-lines first, then a checklist of only the steps this run couldn't do. */
 function report(done: string[], migrated: boolean): void {
-  const ws = getWorkspaceName()
   const steps: string[] = []
 
   if (!migrated) {
-    steps.push(`Migrate the console's local D1:\n   pnpm --filter @${ws}/console run db:run-migrations`)
+    steps.push(`Migrate the console's local D1:\n   cd apps/console && pnpm run db:run-migrations`)
   }
   // Gate on file contents, not this run's flags, so re-runs stay accurate.
   const consoleAlchemy = path.join(REPO_ROOT, 'apps', 'console', 'alchemy.run.ts')
@@ -301,7 +300,7 @@ function report(done: string[], migrated: boolean): void {
   if (originIsPlaceholder) {
     steps.push(
       'Once you have a domain, set the production origin everywhere at once:\n' +
-        '   pnpm setup-project --allowed-origin https://your.domain',
+        '   pnpm setup-project --allowed-production-origin https://your.domain',
     )
   }
   if (!githubUrl) {
@@ -312,8 +311,8 @@ function report(done: string[], migrated: boolean): void {
   }
   steps.push('On GitHub: Settings → uncheck "Template repository" on your copy.')
   steps.push(
-    `Try it: pnpm dev:console\n` +
-      `   (sign in without a phone: pnpm --filter @${ws}/console run dev:simulator)`,
+    `Try it: cd apps/console && pnpm dev\n` +
+      `   (sign in without a phone: pnpm dev:simulator)`,
   )
   steps.push(
     'Scaffold your first mini app: pnpm new-app <slug>\n' +
@@ -329,11 +328,11 @@ const migrated = migrateConsoleDb()
 
 const done: string[] = []
 if (renameNeeded) done.push(`✅ Project renamed to "${next}"`)
-if (originValue) {
+if (productionOriginValue) {
   done.push(
     originChanged > 0
-      ? `✅ ALLOWED_ORIGIN set to "${originValue}" in ${originChanged} file(s)`
-      : `✅ ALLOWED_ORIGIN already "${originValue}"`,
+      ? `✅ ALLOWED_PRODUCTION_ORIGIN set to "${productionOriginValue}" in ${originChanged} file(s)`
+      : `✅ ALLOWED_PRODUCTION_ORIGIN already "${productionOriginValue}"`,
   )
 }
 if (githubUrl) {

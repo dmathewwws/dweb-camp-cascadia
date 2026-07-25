@@ -30,11 +30,12 @@ database_id = "local"
 # In dev: Vite serves the client at :5173 (this is unused).
 # In production: Alchemy uploads ./client/dist to Workers Assets.
 
-# ALLOWED_ORIGIN is left unset in dev so the JWT audience check is skipped —
-# scaffolded apps get their own port pair (5174/8788, 5175/8789, …), which a
-# hardcoded localhost value wouldn't match. Production is set via alchemy.run.ts.
+# ALLOWED_PRODUCTION_ORIGIN is the prod origin only — set it in alchemy.run.ts, and
+# leave it unset here so the JWT audience check is skipped in dev. Scaffolded apps get
+# their own port pair (5174/8788, 5175/8789, …), which a hardcoded localhost value
+# wouldn't match. Uncomment below only to pin the check to one local port on purpose.
 [vars]
-# ALLOWED_ORIGIN = "http://localhost:5173"
+# ALLOWED_PRODUCTION_ORIGIN = "http://localhost:5173"
 
 # Dev server configuration
 [dev]

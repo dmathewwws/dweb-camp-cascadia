@@ -15,11 +15,11 @@ import type { Broadcaster } from './server/src/durable-object'
 // The single origin this app accepts Local First Auth JWTs for. Committed literal
 // on purpose — never read this from .env (alchemy deploy loads .env, so a local
 // deploy would push a localhost origin to prod). `pnpm setup-project
-// --allowed-origin https://your.domain` (from the workspace root) replaces it
-// everywhere at once. While it is still the placeholder, no routes are attached —
+// --allowed-production-origin https://your.domain` (from the workspace root) replaces
+// it everywhere at once. While it is still the placeholder, no routes are attached —
 // the Worker only gets its workers.dev URL.
-const ALLOWED_ORIGIN = 'https://your-domain.example'
-const hasRealOrigin = !ALLOWED_ORIGIN.includes('your-domain.example')
+const ALLOWED_PRODUCTION_ORIGIN = 'https://your-domain.example'
+const hasRealOrigin = !ALLOWED_PRODUCTION_ORIGIN.includes('your-domain.example')
 
 // Initialize Alchemy app with remote state store
 const app = await alchemy('__APP_NAME__', {
@@ -68,7 +68,7 @@ export const worker = await Worker('worker', {
     DB: database,
     DURABLE_OBJECT: durableObject,
     ASSETS: staticAssets,
-    ALLOWED_ORIGIN,
+    ALLOWED_PRODUCTION_ORIGIN,
     // Example runtime secret — the full pattern (see docs/secrets.md):
     //   1. add MY_SECRET= to .env and .env.example
     //   2. add it to [secrets] required in wrangler.toml (local dev)
@@ -82,12 +82,13 @@ export const worker = await Worker('worker', {
   },
   // Claim /<slug> (the entry link) and /<slug>/* (assets + in-app routes) on the
   // shared domain. Most-specific route wins, so this overrides the host console's
-  // catch-all. Activates automatically once ALLOWED_ORIGIN is your real domain.
+  // catch-all. Activates automatically once ALLOWED_PRODUCTION_ORIGIN is your real
+  // domain.
   ...(hasRealOrigin
     ? {
         routes: [
-          `${new URL(ALLOWED_ORIGIN).host}/__SLUG__`,
-          `${new URL(ALLOWED_ORIGIN).host}/__SLUG__/*`,
+          `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/__SLUG__`,
+          `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/__SLUG__/*`,
         ],
       }
     : {}),

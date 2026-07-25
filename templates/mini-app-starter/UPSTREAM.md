@@ -50,9 +50,9 @@ show these; keep the local versions:
 - **`blocked` column** in the users schema (migration 0002) — required by the host
   console's admin Block action.
 
-Note: `pnpm setup-project --github-url … --allowed-origin …` writes your fork's
-values into this copy (the footer link in `client/src/components/Footer.tsx` and
-`ALLOWED_ORIGIN` in `alchemy.run.ts`), so the diff against upstream will show
+Note: `pnpm setup-project --github-url … --allowed-production-origin …` writes your
+fork's values into this copy (the footer link in `client/src/components/Footer.tsx` and
+`ALLOWED_PRODUCTION_ORIGIN` in `alchemy.run.ts`), so the diff against upstream will show
 those lines changed — that's expected; keep your values.
 
 Note: existing apps under `apps/` are **not** retroactively updated — they diverge

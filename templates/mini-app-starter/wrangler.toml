@@ -37,12 +37,12 @@ new_classes = ["Broadcaster"]
 # [secrets]
 # required = ["MY_SECRET"]
 
-# ALLOWED_ORIGIN is left unset in dev so the JWT audience check is skipped —
-# each scaffolded app gets its own port pair (5174/8788, 5175/8789, …), which a
-# hardcoded localhost value wouldn't match. Set your deployed origin in
-# alchemy.run.ts for production.
+# ALLOWED_PRODUCTION_ORIGIN is the prod origin only — set it in alchemy.run.ts, and
+# leave it unset here so the JWT audience check is skipped in dev. Each scaffolded app
+# gets its own port pair (5174/8788, 5175/8789, …), which a hardcoded localhost value
+# wouldn't match. Uncomment below only to pin the check to one local port on purpose.
 [vars]
-# ALLOWED_ORIGIN = "http://localhost:5173"
+# ALLOWED_PRODUCTION_ORIGIN = "http://localhost:5173"
 
 # Dev server configuration
 [dev]

@@ -17,7 +17,7 @@
  *     `__APP_NAME__` (Cloudflare resource names, `<workspace>-<slug>-mini-app`)
  *     — then fails loudly if any token survived the pass
  *   - claims a free worker + vite port pair so apps can run side by side
- *   - wires the app into the root tsconfig references and adds a `dev:<slug>` script
+ *   - wires the app into the root tsconfig references
  *   - installs and runs the app's local D1 migrations
  *
  * The scaffolded app is fully wired for `/<slug>/` subpath serving. The one thing
@@ -182,7 +182,7 @@ fs.writeFileSync(
     .replace(/target:\s*'http:\/\/localhost:\d+'/g, `target: 'http://localhost:${workerPort}'`),
 )
 
-// ── root wiring (tsconfig reference + dev:<slug> script) ───────────────────
+// ── root wiring (tsconfig reference) ───────────────────────────────────────
 const rootTsconfigPath = path.join(REPO_ROOT, 'tsconfig.json')
 const rootTsconfig = JSON.parse(fs.readFileSync(rootTsconfigPath, 'utf8')) as {
   references?: Array<{ path: string }>
@@ -191,15 +191,6 @@ const refPath = `./apps/${slug}`
 if (!rootTsconfig.references?.some((r) => r.path === refPath)) {
   rootTsconfig.references = [...(rootTsconfig.references ?? []), { path: refPath }]
   fs.writeFileSync(rootTsconfigPath, JSON.stringify(rootTsconfig, null, 2) + '\n')
-}
-
-const rootPkgPath = path.join(REPO_ROOT, 'package.json')
-const rootPkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8')) as {
-  scripts: Record<string, string>
-}
-if (!rootPkg.scripts[`dev:${slug}`]) {
-  rootPkg.scripts[`dev:${slug}`] = `pnpm --filter ${pkgScope} run dev`
-  fs.writeFileSync(rootPkgPath, JSON.stringify(rootPkg, null, 2) + '\n')
 }
 
 // ── install + local migrations ──────────────────────────────────────────────
@@ -213,7 +204,7 @@ try {
 }
 
 // The app's D1 is local-only in dev (database_id = "local"), so migrations need
-// no Cloudflare auth — run them now so `pnpm dev:<slug>` works immediately.
+// no Cloudflare auth — run them now so `pnpm dev` works immediately.
 let migrated = false
 if (installed) {
   console.log('   Running local D1 migrations…\n')
@@ -226,21 +217,20 @@ if (installed) {
 }
 
 // ── report ──────────────────────────────────────────────────────────────────
-const filter = `pnpm --filter ${pkgScope}`
 console.log(`
 ✅ apps/${slug} created
    packages  ${pkgScope}{,-client,-server,-shared}
    ports     worker :${workerPort} · vite :${vitePort}  →  http://localhost:${vitePort}/${slug}/
    serving   /${slug}/ base + /${slug}/api/* (already wired)
-   db        ${migrated ? 'local D1 migrated ✔' : `⚠ run: ${filter} run db:run-migrations`}
+   db        ${migrated ? 'local D1 migrated ✔' : `⚠ run: cd apps/${slug} && pnpm run db:run-migrations`}
 
 Next steps:
-  1. Run it: pnpm dev:${slug}   (simulator sign-in: ${filter} run dev:simulator)
+  1. Run it: cd apps/${slug} && pnpm dev   (simulator sign-in: pnpm dev:simulator)
   2. Build your features — see apps/${slug}/CLAUDE.md.
   3. Deploy: cp apps/${slug}/.env.example apps/${slug}/.env, set ALCHEMY_STATE_TOKEN,
-     then ${filter} run deploy:cloudflare
-     (routes attach automatically once ALLOWED_ORIGIN is your real domain —
-      set it once for all apps: pnpm setup-project --allowed-origin https://your.domain)
+     then from apps/${slug}: pnpm run deploy:cloudflare
+     (routes attach automatically once ALLOWED_PRODUCTION_ORIGIN is your real domain —
+      set it once for all apps: pnpm setup-project --allowed-production-origin https://your.domain)
   4. After the first deploy, register the app with the host console — follow
      "Register with the host console" in apps/console/docs/hosting-a-mini-app.md
      (grid card, MANAGED_APPS + ChildBindingKey, DB_${slug.replace(/-/g, '_').toUpperCase()} dev binding, redeploy host).

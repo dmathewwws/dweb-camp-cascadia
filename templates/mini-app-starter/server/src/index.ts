@@ -20,12 +20,13 @@ const app = new Hono<{ Bindings: Env }>().basePath('/__SLUG__')
 
 /**
  * Verify a Local First Auth JWT and enforce that it was minted for our origin
- * (the ALLOWED_ORIGIN binding; unset in dev, which skips the audience check).
+ * (the ALLOWED_PRODUCTION_ORIGIN binding; unset in dev, which skips the audience
+ * check).
  * local-first-auth signs with a per-origin key, so a JWT issued at another origin carries
  * a different DID and would silently create a duplicate user row.
  */
 const verifyJwt = (c: Context<{ Bindings: Env }>, jwt: string) =>
-  decodeAndVerifyJWT(jwt, c.env.ALLOWED_ORIGIN)
+  decodeAndVerifyJWT(jwt, c.env.ALLOWED_PRODUCTION_ORIGIN)
 
 // Enable CORS for all requests
 app.use('/*', cors({
