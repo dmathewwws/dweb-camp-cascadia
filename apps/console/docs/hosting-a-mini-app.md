@@ -80,28 +80,55 @@ const app = new Hono<{ Bindings: Env }>().basePath('/guestbook')
 (Consequence in dev: the worker 404s at a bare `/api/...` — always go through the
 prefixed path, or the Vite proxy.)
 
-### 5. Alchemy routes (two patterns) + own infrastructure
+The Worker must also serve the static assets itself. Cloudflare stores the uploaded
+`client/dist` files at dist-root keys (`/index.html`, `/assets/…`), but the page
+requests them under `/guestbook/…`, so no asset ever matches directly — the fetch
+handler strips the prefix and goes through the `ASSETS` binding (unknown paths fall
+through to `index.html` via the SPA `not_found_handling`):
 
-In the child app's `alchemy.run.ts`, bind **both** the bare path and the subtree, and keep
-the SPA fallback. Give the app its **own** D1 and Durable Object (full isolation):
+```ts
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url)
+    if (url.pathname === '/guestbook/api' || url.pathname.startsWith('/guestbook/api/')) {
+      return app.fetch(request, env, ctx)
+    }
+    url.pathname = url.pathname.slice('/guestbook'.length) || '/'
+    return env.ASSETS.fetch(new Request(url.toString(), request))
+  },
+}
+```
+
+(`Env` needs `ASSETS: Fetcher`, and dev needs the matching `[assets]` block in
+`wrangler.toml` — see the template.)
+
+### 5. Alchemy routes + own infrastructure
+
+In the child app's `alchemy.run.ts`, claim the subtree, keep the SPA fallback, and set
+`run_worker_first: true` so every request reaches the fetch handler above (instead of
+Cloudflare's pre-Worker asset/SPA interception). Give the app its **own** D1 and
+Durable Object (full isolation):
 
 ```ts
 export const worker = await Worker('worker', {
   name: `${app.name}-${app.stage}`,
   entrypoint: './server/src/index.ts',
   bindings: { DB: database, DURABLE_OBJECT: durableObject, ASSETS: staticAssets },
-  assets: { html_handling: 'auto-trailing-slash', not_found_handling: 'single-page-application' },
+  assets: {
+    html_handling: 'auto-trailing-slash',
+    not_found_handling: 'single-page-application',
+    run_worker_first: true,
+  },
   routes: [
-    'example.com/guestbook',
     'example.com/guestbook/*',
   ],
 })
 ```
 
-The two patterns matter: `/guestbook` (no trailing slash, the entry link) and
-`/guestbook/*` (assets + in-app routes). Template-scaffolded apps derive these from
-`ALLOWED_PRODUCTION_ORIGIN` automatically once it is set to the real domain
-(`pnpm setup-project --allowed-production-origin https://your.domain`).
+Only `/guestbook/*` is claimed — the bare `/guestbook` path is not, so every link to
+the app must use the trailing-slash form `/guestbook/`. Template-scaffolded apps derive
+the route from `ALLOWED_PRODUCTION_ORIGIN` automatically once it is set to the real
+domain (`pnpm setup-project --allowed-production-origin https://your.domain`).
 
 ### 6. Manifest
 
@@ -123,11 +150,11 @@ cd apps/guestbook && pnpm exec wrangler d1 list
 ### 2. Landing-grid card — `client/src/apps.ts`
 
 ```ts
-{ slug: 'guestbook', name: 'Guestbook', description: '…', path: '/guestbook', icon: '📖', accent: 'from-rose-400 to-orange-300' }
+{ slug: 'guestbook', name: 'Guestbook', description: '…', path: '/guestbook/', icon: '📖', accent: 'from-rose-400 to-orange-300' }
 ```
 
-`path` MUST be `/<slug>` with **no trailing slash** — it's a real cross-document link;
-the Worker's `auto-trailing-slash` handling redirects to `/<slug>/`.
+`path` MUST be `/<slug>/` **with the trailing slash** — the child Worker only claims
+`/<slug>/*`, so the bare `/<slug>` path isn't routed to it.
 
 ### 3. Managed-app registry — `shared/src/apps.ts` (required, not optional)
 

@@ -79,15 +79,19 @@ export const worker = await Worker('worker', {
   assets: {
     html_handling: 'auto-trailing-slash',
     not_found_handling: 'single-page-application',
+    // Assets are uploaded at dist-root keys but requested under /<slug>/, so no
+    // asset ever matches directly — the Worker strips the prefix and serves them
+    // via the ASSETS binding. This disables the pre-Worker asset/SPA interception.
+    run_worker_first: true,
   },
-  // Claim /<slug> (the entry link) and /<slug>/* (assets + in-app routes) on the
-  // shared domain. Most-specific route wins, so this overrides the host console's
-  // catch-all. Activates automatically once ALLOWED_PRODUCTION_ORIGIN is your real
-  // domain.
+  // Claim /<slug>/* (entry page + assets + in-app routes) on the shared domain.
+  // Most-specific route wins, so this overrides the host console's catch-all.
+  // Links must use the trailing-slash form (/<slug>/); the bare /<slug> path is
+  // not claimed. Activates automatically once ALLOWED_PRODUCTION_ORIGIN is your
+  // real domain.
   ...(hasRealOrigin
     ? {
         routes: [
-          `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/people`,
           `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/people/*`,
         ],
       }

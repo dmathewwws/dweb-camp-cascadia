@@ -8,6 +8,10 @@ export interface Env {
   // Durable Object namespace for real-time WebSocket broadcasting
   DURABLE_OBJECT: DurableObjectNamespace
 
+  // Static assets binding (the client build); files are keyed at dist-root paths,
+  // so the Worker strips the /<slug> prefix before fetching from it
+  ASSETS: Fetcher
+
   // The single production origin this Worker accepts Local First Auth JWTs for;
   // unset in dev, which skips the audience check. local-first-auth v3 signs with
   // a per-origin key, so a JWT minted at another origin carries a different DID —
