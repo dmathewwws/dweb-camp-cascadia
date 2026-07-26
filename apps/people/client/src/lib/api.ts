@@ -8,6 +8,7 @@ export interface PublicUser {
   name: string | null
   avatar: string | null
   line: string | null
+  highlights: string[]
   interests: string[]
   checkedInAt: string | null
 }
@@ -28,6 +29,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 export async function checkIn(params: {
   profileJwt: string
   line: string
+  highlights: string[]
   interests: string[]
 }): Promise<PublicUser & { isAdmin: boolean }> {
   return postJson('check-in', params)

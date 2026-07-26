@@ -15,26 +15,32 @@ export interface TagGroup {
 
 export const TAG_GROUPS: TagGroup[] = [
   {
-    section: 'Co-Adapt',
-    sectionSub: 'relationships & technology for resilience · care for each other and the land',
-    label: 'open web & standards',
-    tags: ['open standards', 'rss & feeds', 'activitypub & fediverse', 'at protocol & bluesky', 'nostr', 'matrix & chat', 'indieweb & small web', 'browsers & web platform'],
-  },
-  {
-    label: 'infrastructure & protocols',
-    tags: ['mesh networks', 'p2p protocols', 'ipfs & storage', 'local-first & crdts', 'dns & naming', 'self-hosting & homelab', 'community networks & isps', 'ham radio'],
-  },
-  {
-    label: 'software & systems',
-    tags: ['linux & bsd', 'open source', 'free software licensing', 'security & threat modeling', 'tor & anonymity', 'blockchains & web3', 'ai & agents', 'hardware hacking'],
-  },
-  {
     label: 'agency & autonomy',
-    tags: ['privacy & encryption', 'digital identity', 'interoperability', 'data portability', 'anti-monopoly'],
+    tags: ['open source', 'open standards', 'free software licensing', 'interoperability', 'data portability', 'anti-monopolies', 'privacy & encryption'],
+  },
+  {
+    label: 'protocols & data',
+    tags: ['p2p protocols', 'ipfs & storage', 'local-first & crdts', 'blockchains & web3', 'tor', 'decentralized identity'],
+  },
+  {
+    label: 'hardware & repair',
+    tags: ['hardware hacking', 'right to repair', 'microcontrollers & sensors', 'mesh networks & lora', 'low-power devices', 'ham radio', 'community networks & isps', 'solar / off-grid', 'repair & reuse', 'permacomputing'],
+  },
+  {
+    label: 'software & self-hosting',
+    tags: ['linux', 'self-hosting & homelab', 'local-first ai & agents', 'security & threat modeling'],
+  },
+  {
+    label: 'the social web',
+    tags: ['activitypub & fediverse', 'at protocol & bluesky', 'nostr', 'matrix', 'rss', 'indieweb', 'browsers & web standards'],
   },
   {
     label: 'shared power',
-    tags: ['co-ops & commons', 'governance & daos', 'funding & sustainability'],
+    tags: ['co-ops & commons', 'co-housing & intentional communities', 'unions & collective bargaining', 'governance & daos', 'funding & sustainability'],
+  },
+  {
+    label: 'supporting each other',
+    tags: ['mutual aid', 'community care', 'facilitation & circles', 'moderation & trust', 'codes of conduct'],
   },
   {
     label: 'humanity & access',
@@ -45,32 +51,16 @@ export const TAG_GROUPS: TagGroup[] = [
     tags: ['archiving & preservation', 'open knowledge & wikis', 'creative commons', 'indigenous data sovereignty'],
   },
   {
-    label: 'supporting each other',
-    tags: ['mutual aid', 'collective care', 'community care', 'facilitation & circles', 'moderation & trust', 'codes of conduct'],
-  },
-  {
     label: 'caring for the land',
-    tags: ['land stewardship', 'climate & bioregion', 'resilience & preparedness', 'solar / off-grid', 'repair & reuse', 'permacomputing'],
+    tags: ['land stewardship', 'permaculture', 'soil & composting', 'forests & fire stewardship', 'growing food & gardens', 'food sovereignty', 'climate & bioregion', 'resilience & preparedness'],
   },
   {
-    section: 'Co-Create',
-    sectionSub: 'camp as our collective project · exploring, learning, cooking, eating, playing',
     label: 'bring your gifts',
-    tags: ['art & fabulousness', 'craft & making', 'music & jams', 'running a session', 'campfire stories'],
-  },
-  {
-    label: 'explore, cook & play',
-    tags: ['forest walks', 'sauna & lake', 'cooking & feasting', 'games & play', 'kids & families'],
-  },
-  {
-    section: 'Co-Here',
-    sectionSub: 'collaborations seeded to grow through the year · Cascadia, cross-pollination, this land',
-    label: 'seeded to grow',
-    tags: ['looking for collaborators', 'year-round projects', 'cross-pollination', 'cascadia local', 'first time at camp'],
+    tags: ['art & crafts', 'music & jams', 'games & play', 'karaoke', 'running a session', 'campfire stories', 'forest walks', 'cooking', 'kids & families'],
   },
   {
     label: 'this place',
-    tags: ['salt spring community', 'regenerative practices'],
+    tags: ['salt spring community', 'regenerative practices', 'cascadia local', 'first time at camp', 'second time at camp'],
   },
 ]
 
@@ -78,5 +68,9 @@ export const ALL_TAGS: readonly string[] = TAG_GROUPS.flatMap((g) => g.tags)
 export const ALL_TAGS_SET: ReadonlySet<string> = new Set(ALL_TAGS)
 
 export const MIN_INTERESTS = 1
-export const MAX_INTERESTS = 10
+export const MAX_INTERESTS = 25
 export const MAX_LINE_LENGTH = 80
+
+export const MAX_HIGHLIGHTS = 3
+// Roomy enough for a sentence plus a URL — highlights may contain inline links
+export const MAX_HIGHLIGHT_LENGTH = 120

@@ -11,6 +11,8 @@ export const users = sqliteTable('users', {
   // column directly through its D1 binding to this app's database.
   blocked: integer('blocked', { mode: 'boolean' }).notNull().default(false),
   line: text('line'), // one-line bio from check-in
+  // Up to MAX_HIGHLIGHTS short "what I'm proud of" lines from check-in; null = none
+  highlights: text('highlights', { mode: 'json' }).$type<string[]>(),
   interests: text('interests', { mode: 'json' }).$type<string[]>(),
   // Set on first check-in only; null = never checked in (hidden from directory)
   checkedInAt: integer('checked_in_at', { mode: 'timestamp' }),

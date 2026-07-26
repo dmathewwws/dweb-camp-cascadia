@@ -92,20 +92,22 @@ export async function addOrUpdateUserAvatar(db: Database, did: string, avatar: s
 }
 
 /**
- * Upsert check-in data (bio line + interests), preserves name/avatar on update.
- * checkedInAt is set on the first check-in only.
+ * Upsert check-in data (bio line + highlights + interests), preserves name/avatar
+ * on update. checkedInAt is set on the first check-in only.
  */
 export async function setCheckIn(
   db: Database,
   did: string,
   line: string | null,
-  interests: string[]
+  interests: string[],
+  highlights: string[]
 ): Promise<User> {
   const [user] = await db
     .insert(users)
     .values({
       did,
       line,
+      highlights,
       interests,
       checkedInAt: sql`(unixepoch())`,
     })
@@ -113,6 +115,7 @@ export async function setCheckIn(
       target: users.did,
       set: {
         line: sql`excluded.line`,
+        highlights: sql`excluded.highlights`,
         interests: sql`excluded.interests`,
         checkedInAt: sql`COALESCE(checked_in_at, excluded.checked_in_at)`,
       },

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { Camper } from '../hooks/useDirectory'
 import { CamperAvatar } from './CamperAvatar'
+import { HighlightText } from './HighlightText'
 
 interface ProfileSheetProps {
   camper: Camper | null
@@ -64,7 +65,23 @@ export function ProfileSheet({ camper, onClose }: ProfileSheetProps) {
               <p className="text-[15px] leading-relaxed mt-3.5 mb-1.5">{camper.line}</p>
             )}
 
-            <div className="mono-label mt-[18px] mb-2">their roots</div>
+            {camper.highlights.length > 0 && (
+              <>
+                <div className="mono-label mt-[18px] mb-2">proud of</div>
+                <ul className="space-y-1.5">
+                  {camper.highlights.map((highlight, i) => (
+                    <li key={i} className="flex gap-2 items-baseline text-[14.5px] leading-snug">
+                      <span aria-hidden="true">✦</span>
+                      <span>
+                        <HighlightText text={highlight} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            <div className="mono-label mt-[18px] mb-2">their interests</div>
             <div className="flex flex-wrap gap-1.5">
               {camper.interests.map((t) => (
                 <span
@@ -75,19 +92,6 @@ export function ProfileSheet({ camper, onClose }: ProfileSheetProps) {
                 </span>
               ))}
             </div>
-
-            {camper.shared.length > 0 && (
-              <div className="mt-[18px] p-[13px_15px] rounded-[14px] bg-acid text-[13.5px] leading-normal flex gap-2.5 items-start">
-                <span>✳</span>
-                <span>
-                  You share{' '}
-                  <span className="font-brand-mono font-bold">
-                    {camper.shared.length} root{camper.shared.length > 1 ? 's' : ''}
-                  </span>{' '}
-                  — {camper.shared.join(', ')}. A campfire conversation waiting to happen.
-                </span>
-              </div>
-            )}
           </>
         )}
       </div>

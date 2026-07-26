@@ -83,6 +83,7 @@ export function useDirectory() {
           !q ||
           (c.name ?? '').toLowerCase().includes(q) ||
           (c.line ?? '').toLowerCase().includes(q) ||
+          c.highlights.some((h) => h.toLowerCase().includes(q)) ||
           c.interests.some((t) => t.includes(q))
       )
       .sort(

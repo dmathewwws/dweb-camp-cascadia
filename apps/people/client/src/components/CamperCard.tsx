@@ -24,11 +24,6 @@ export function CamperCard({ camper, onOpen }: CamperCardProps) {
       <span className="flex-1 min-w-0">
         <span className="flex items-center gap-2 flex-wrap">
           <span className="font-bold text-base">{camper.name ?? 'camper'}</span>
-          {camper.shared.length > 0 && (
-            <span className="font-brand-mono text-[10px] px-2 py-[3px] rounded-full bg-acid text-ink whitespace-nowrap">
-              ✳ {camper.shared.length} shared root{camper.shared.length > 1 ? 's' : ''}
-            </span>
-          )}
         </span>
         {camper.line && (
           <span className="block text-dim text-[13.5px] leading-snug mt-[3px] line-clamp-2">

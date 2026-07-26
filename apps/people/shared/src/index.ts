@@ -6,5 +6,13 @@ export {
   MIN_INTERESTS,
   MAX_INTERESTS,
   MAX_LINE_LENGTH,
+  MAX_HIGHLIGHTS,
+  MAX_HIGHLIGHT_LENGTH,
   type TagGroup,
 } from './tags.js'
+export {
+  safeUrl,
+  tokenizeHighlight,
+  sanitizeHighlight,
+  type HighlightToken,
+} from './url.js'

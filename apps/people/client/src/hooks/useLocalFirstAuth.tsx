@@ -28,6 +28,7 @@ export interface User {
   socials?: Array<{ platform: string; handle: string }>
   isAdmin: boolean
   line?: string | null
+  highlights?: string[] | null
   interests?: string[] | null
   checkedInAt?: string | null
 }

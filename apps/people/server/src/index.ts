@@ -19,6 +19,9 @@ import {
   MIN_INTERESTS,
   MAX_INTERESTS,
   MAX_LINE_LENGTH,
+  MAX_HIGHLIGHTS,
+  MAX_HIGHLIGHT_LENGTH,
+  sanitizeHighlight,
 } from '@dweb/people-shared'
 
 // The app is served under /<slug>/ on the shared domain; basePath keeps every
@@ -51,6 +54,7 @@ const toPublicUser = (u: User) => ({
   name: u.name,
   avatar: u.avatar,
   line: u.line,
+  highlights: u.highlights ?? [],
   interests: u.interests ?? [],
   checkedInAt: u.checkedInAt,
 })
@@ -150,13 +154,13 @@ app.post('/api/add-avatar', async (c) => {
 })
 
 /**
- * POST /api/check-in - Save the user's bio line + interest tags
+ * POST /api/check-in - Save the user's bio line + highlights + interest tags
  * Users appear in the directory only after checking in
  */
 app.post('/api/check-in', async (c) => {
   try {
     const body = await c.req.json()
-    const { profileJwt, line, interests } = body
+    const { profileJwt, line, interests, highlights } = body
 
     if (!profileJwt) {
       return c.json({ error: 'Missing profileJwt' }, 400)
@@ -172,6 +176,21 @@ app.post('/api/check-in', async (c) => {
     const trimmedLine = line?.trim() || null
     if (trimmedLine && trimmedLine.length > MAX_LINE_LENGTH) {
       return c.json({ error: `line must be at most ${MAX_LINE_LENGTH} characters` }, 400)
+    }
+
+    // Highlights are optional; older clients omit them entirely
+    if (highlights != null && (!Array.isArray(highlights) || highlights.some((h) => typeof h !== 'string'))) {
+      return c.json({ error: 'highlights must be an array of strings' }, 400)
+    }
+    const trimmedHighlights = ((highlights ?? []) as string[])
+      .map(sanitizeHighlight)
+      .filter(Boolean)
+      .slice(0, MAX_HIGHLIGHTS)
+    if (trimmedHighlights.some((h) => h.length > MAX_HIGHLIGHT_LENGTH)) {
+      return c.json(
+        { error: `each highlight must be at most ${MAX_HIGHLIGHT_LENGTH} characters` },
+        400
+      )
     }
 
     if (!Array.isArray(interests) || interests.some((t) => typeof t !== 'string')) {
@@ -190,7 +209,13 @@ app.post('/api/check-in', async (c) => {
     }
 
     const db = createDb(c.env.DB)
-    const user = await UserModel.setCheckIn(db, did, trimmedLine, uniqueInterests)
+    const user = await UserModel.setCheckIn(
+      db,
+      did,
+      trimmedLine,
+      uniqueInterests,
+      trimmedHighlights
+    )
 
     // Don't resurface blocked users to the live directory
     if (!user.blocked) {
