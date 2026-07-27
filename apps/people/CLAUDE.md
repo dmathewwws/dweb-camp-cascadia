@@ -206,7 +206,7 @@ Defined inline in `/server/src/durable-object.ts` and `/server/src/index.ts`.
 |--------|----------|-------------|------|
 | `POST` | `/api/add-user` | Add or update user profile | JWT required |
 | `POST` | `/api/add-avatar` | Add or update user avatar | JWT required |
-| `DELETE` | `/api/remove-user` | Remove user | JWT required |
+| `DELETE` | `/api/remove-user` | Remove self, or any non-admin user via `targetDid` (admin only) | JWT required |
 | `GET` | `/api/users` | Get all users from database | Public |
 | `GET` | `/api` | Health check | Public |
 

@@ -35,6 +35,18 @@ export async function checkIn(params: {
   return postJson('check-in', params)
 }
 
+export async function removeUser(profileJwt: string, targetDid: string): Promise<void> {
+  const response = await fetch(`${import.meta.env.BASE_URL}api/remove-user`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profileJwt, targetDid }),
+  })
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null)
+    throw new Error(errorData?.error || 'Failed to remove camper')
+  }
+}
+
 export async function fetchUsers(): Promise<PublicUser[]> {
   const response = await fetch(`${import.meta.env.BASE_URL}api/users`)
   if (!response.ok) {

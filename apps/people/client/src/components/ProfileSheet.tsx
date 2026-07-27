@@ -1,5 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { Camper } from '../hooks/useDirectory'
+import { useLocalFirstAuth } from '../hooks/useLocalFirstAuth'
+import { removeUser } from '../lib/api'
 import { CamperAvatar } from './CamperAvatar'
 import { HighlightText } from './HighlightText'
 
@@ -9,6 +11,11 @@ interface ProfileSheetProps {
 }
 
 export function ProfileSheet({ camper, onClose }: ProfileSheetProps) {
+  const { user, getProfileJwt } = useLocalFirstAuth()
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
+  const [removeError, setRemoveError] = useState<string | null>(null)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -16,6 +23,36 @@ export function ProfileSheet({ camper, onClose }: ProfileSheetProps) {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Clear the remove flow whenever the sheet switches campers or closes
+  useEffect(() => {
+    setShowConfirm(false)
+    setRemoveError(null)
+  }, [camper?.did])
+
+  const canRemove = Boolean(user?.isAdmin && camper && camper.did !== user?.did)
+
+  const handleRemove = async () => {
+    if (!camper) return
+    const profileJwt = await getProfileJwt()
+    if (!profileJwt) {
+      setRemoveError('No profile JWT available')
+      return
+    }
+
+    setIsRemoving(true)
+    setRemoveError(null)
+    try {
+      await removeUser(profileJwt, camper.did)
+      onClose()
+    } catch (err) {
+      console.error('Error removing camper:', err)
+      setRemoveError(err instanceof Error ? err.message : 'Failed to remove camper')
+    } finally {
+      setIsRemoving(false)
+      setShowConfirm(false)
+    }
+  }
 
   const open = camper !== null
   const shared = new Set(camper?.shared ?? [])
@@ -92,6 +129,49 @@ export function ProfileSheet({ camper, onClose }: ProfileSheetProps) {
                 </span>
               ))}
             </div>
+
+            {canRemove && (
+              <div className="mt-6 pt-4 border-t border-line">
+                {removeError && (
+                  <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-md text-red-800 text-[13px]">
+                    {removeError}
+                  </div>
+                )}
+                {!showConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(true)}
+                    className="w-full px-4 py-2 border border-red-300 text-red-700 rounded-md text-[14px] hover:bg-red-50 transition-colors"
+                  >
+                    Remove camper
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[13px] text-red-700 font-medium">
+                      Remove {camper.name ?? 'this camper'} from the directory? They can
+                      check in again later.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleRemove}
+                        disabled={isRemoving}
+                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md text-[14px] hover:bg-red-700 disabled:bg-red-300 transition-colors"
+                      >
+                        {isRemoving ? 'Removing…' : 'Yes, remove'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm(false)}
+                        className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-[14px] hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

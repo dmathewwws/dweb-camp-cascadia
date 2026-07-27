@@ -5,6 +5,7 @@ import { useLocalFirstAuth } from './useLocalFirstAuth'
 
 export interface Camper extends PublicUser {
   shared: string[]
+  isSelf?: boolean
 }
 
 export function useDirectory() {
@@ -65,12 +66,17 @@ export function useDirectory() {
     }
   }, [subscribeToWs])
 
-  // Everyone checked in, with shared-roots computed against me
+  // Everyone checked in, with shared-roots computed against me. My own card
+  // gets an empty `shared` so it doesn't render as a kindred match with myself.
   const campers: Camper[] = useMemo(
     () =>
       [...byDid.values()]
-        .filter((u) => (u.interests?.length ?? 0) >= 1 && u.did !== myDid)
-        .map((u) => ({ ...u, shared: u.interests.filter((t) => myInterests.has(t)) })),
+        .filter((u) => (u.interests?.length ?? 0) >= 1)
+        .map((u) =>
+          u.did === myDid
+            ? { ...u, shared: [], isSelf: true }
+            : { ...u, shared: u.interests.filter((t) => myInterests.has(t)) }
+        ),
     [byDid, myDid, myInterests]
   )
 
@@ -88,6 +94,7 @@ export function useDirectory() {
       )
       .sort(
         (a, b) =>
+          (a.isSelf ? 1 : 0) - (b.isSelf ? 1 : 0) ||
           b.shared.length - a.shared.length ||
           (a.name ?? '').localeCompare(b.name ?? '')
       )

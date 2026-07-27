@@ -234,12 +234,13 @@ app.post('/api/check-in', async (c) => {
 
 /**
  * DELETE /api/remove-user - Remove user
- * Requires JWT verification to ensure user is removing themselves
+ * Removes the requester by default; admins may pass targetDid to remove
+ * another (non-admin) user.
  */
 app.delete('/api/remove-user', async (c) => {
   try {
     const body = await c.req.json()
-    const { profileJwt } = body
+    const { profileJwt, targetDid } = body
 
     if (!profileJwt) {
       return c.json({ error: 'Missing profileJwt' }, 400)
@@ -249,14 +250,28 @@ app.delete('/api/remove-user', async (c) => {
     const payload = await verifyJwt(c, profileJwt)
     const did = payload.iss
 
-    // Create database instance and delete user
     const db = createDb(c.env.DB)
-    await UserModel.deleteUserByDID(db, did)
+    const target = targetDid ?? did
+
+    if (target !== did) {
+      const isAdmin = await UserModel.isUserAdmin(db, did)
+      if (!isAdmin) {
+        return c.json({ error: 'Unauthorized: Admin access required' }, 403)
+      }
+
+      // Admins can't be removed this way, mirroring /api/reset
+      const targetUser = await UserModel.getUserByDID(db, target)
+      if (targetUser?.isAdmin) {
+        return c.json({ error: 'Cannot remove an admin user' }, 403)
+      }
+    }
+
+    await UserModel.deleteUserByDID(db, target)
 
     // Broadcast to all WebSocket clients via Durable Object
-    await notifyDO(c, 'user-left', { did })
+    await notifyDO(c, 'user-left', { did: target })
 
-    return c.json({ success: true, did })
+    return c.json({ success: true, did: target })
   } catch (error) {
     console.error('Remove user error:', error)
     return c.json(
