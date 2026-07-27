@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <div className="mt-4 pb-4 text-center text-sm text-paper-dim">
+    <div className="mt-4 pb-[calc(16px+env(safe-area-inset-bottom))] text-center text-sm text-paper-dim">
       This is an {' '}
       <a
         href="https://github.com/dmathewwws/dweb-camp-cascadia"
@@ -10,7 +10,9 @@ export function Footer() {
       >
         open source
       </a>
-      {' '}project.
+      {' '}project. {' '}<br />
+      All photos are deleted after 14 days.
+      <br />
     </div>
   )
 }

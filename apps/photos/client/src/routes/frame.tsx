@@ -64,10 +64,10 @@ export function Frame() {
       a.download = `roll-frame-${pad(frameNo)}.jpg`
       a.click()
       URL.revokeObjectURL(url)
-      flash('Print saved')
+      flash('Photo saved')
     } catch (err) {
       console.error('Save error:', err)
-      flash('Could not save print')
+      flash('Could not save photo')
     } finally {
       setSaving(false)
     }
@@ -86,11 +86,11 @@ export function Frame() {
     setDeleting(true)
     try {
       await deletePhoto(profileJwt, photo.id)
-      flash('Frame removed')
+      flash('Photo removed')
       navigate('/')
     } catch (err) {
       console.error('Delete error:', err)
-      flash(err instanceof Error ? err.message : 'Could not delete frame')
+      flash(err instanceof Error ? err.message : 'Could not delete photo')
       setConfirmingDelete(false)
     } finally {
       setDeleting(false)
@@ -137,7 +137,7 @@ export function Frame() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
           </svg>
-          {saving ? 'Saving…' : 'Save print'}
+          {saving ? 'Downloading…' : 'Download photo'}
         </button>
         {canDelete && (
           <button
@@ -145,7 +145,7 @@ export function Frame() {
             onClick={handleDelete}
             disabled={deleting}
           >
-            {deleting ? 'Removing…' : confirmingDelete ? 'Tap again to confirm delete' : 'Delete frame'}
+            {deleting ? 'Removing…' : confirmingDelete ? 'Tap again to confirm delete' : 'Delete photo'}
           </button>
         )}
       </div>

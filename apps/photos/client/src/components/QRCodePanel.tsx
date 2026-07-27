@@ -21,7 +21,7 @@ export function QRCodePanel({ url }: QRCodePanelProps) {
         />
       </div>
       <div className="font-mono-stamp text-[11px] tracking-[0.18em] uppercase text-paper-dim">
-        Scan to join the roll
+        Scan to add or view photos
       </div>
     </div>
   );

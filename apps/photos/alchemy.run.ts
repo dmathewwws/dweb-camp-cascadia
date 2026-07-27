@@ -44,6 +44,7 @@ const database = await D1Database(`${app.name}-${app.stage}-db`, {
  * R2 Bucket
  * Camp photos (full-size + thumbnail per photo). Phones upload directly via
  * presigned PUT URLs, so the bucket needs CORS for the app origin.
+ * A lifecycle rule deletes every object 14 days after upload.
  */
 const photosBucket = await R2Bucket(`${app.name}-${app.stage}-photos`, {
   name: `${app.name}-${app.stage}-photos`,
@@ -56,6 +57,20 @@ const photosBucket = await R2Bucket(`${app.name}-${app.stage}-photos`, {
         headers: ['content-type'],
       },
       maxAgeSeconds: 3600,
+    },
+  ],
+  lifecycle: [
+    {
+      id: 'delete-photos-after-14-days',
+      conditions: { prefix: '' },
+      enabled: true,
+      deleteObjectsTransition: {
+        condition: { type: 'Age', maxAge: 14 * 24 * 60 * 60 },
+      },
+      // Clean up presigned uploads that never finished
+      abortMultipartUploadsTransition: {
+        condition: { type: 'Age', maxAge: 24 * 60 * 60 },
+      },
     },
   ],
 })
@@ -108,15 +123,19 @@ export const worker = await Worker('worker', {
   assets: {
     html_handling: 'auto-trailing-slash',
     not_found_handling: 'single-page-application',
+    // Assets are uploaded at dist-root keys but requested under /<slug>/, so no
+    // asset ever matches directly — the Worker strips the prefix and serves them
+    // via the ASSETS binding. This disables the pre-Worker asset/SPA interception.
+    run_worker_first: true,
   },
-  // Claim /<slug> (the entry link) and /<slug>/* (assets + in-app routes) on the
-  // shared domain. Most-specific route wins, so this overrides the host console's
-  // catch-all. Activates automatically once ALLOWED_PRODUCTION_ORIGIN is your real
-  // domain.
+  // Claim /<slug>/* (entry page + assets + in-app routes) on the shared domain.
+  // Most-specific route wins, so this overrides the host console's catch-all.
+  // Links must use the trailing-slash form (/<slug>/); the bare /<slug> path is
+  // not claimed. Activates automatically once ALLOWED_PRODUCTION_ORIGIN is your
+  // real domain.
   ...(hasRealOrigin
     ? {
         routes: [
-          `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/photos`,
           `${new URL(ALLOWED_PRODUCTION_ORIGIN).host}/photos/*`,
         ],
       }

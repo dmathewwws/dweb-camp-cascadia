@@ -206,7 +206,7 @@
 .big-btn.float {
   position: fixed;
   left: 50%;
-  bottom: 26px;
+  bottom: calc(60px + env(safe-area-inset-bottom)); /* clears the footer line below it */
   transform: translateX(-50%);
   z-index: 40;
   width: auto;
@@ -219,12 +219,18 @@
   transform: translateX(-50%) translateY(1px);
   box-shadow: 0 0 0 4px rgba(22, 17, 12, 0.62), 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 146, 51, 0.26);
 }
+/* Centre on the right-hand content column of the md:grid-cols-2 layout, not the seam */
+@media (min-width: 768px) {
+  .big-btn.float {
+    left: 75%;
+  }
+}
 
 /* Toast pill */
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 104px;
+  bottom: calc(138px + env(safe-area-inset-bottom));
   transform: translateX(-50%) translateY(10px);
   z-index: 50;
   background: var(--color-film-2);
@@ -247,6 +253,11 @@
 }
 .toast .dot {
   color: var(--color-stamp);
+}
+@media (min-width: 768px) {
+  .toast {
+    left: 75%;
+  }
 }
 
 /* Polaroid card (detail view) */

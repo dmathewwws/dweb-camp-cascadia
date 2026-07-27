@@ -1,9 +1,3 @@
-export const CAMP = {
-  title: 'DWeb Camp Cascadia',
-  tagline: 'One roll, four days',
-  datesLabel: 'Aug 6–9 · 2026',
-} as const
-
 /** Film-edge date stamp, e.g. `'26·8·06` */
 export function formatStamp(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000)
