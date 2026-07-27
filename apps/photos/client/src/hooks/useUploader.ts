@@ -7,6 +7,7 @@ import { useToast } from './useToast'
 
 const MAX_BATCH = 25
 const CONCURRENCY = 3 // camp wifi
+const PROCESS_SHARE = 0.15 // slice of each photo's progress bar reserved for on-device processing
 
 export interface UploadBatch {
   total: number
@@ -53,29 +54,48 @@ export function useUploader() {
     setBatch({ total: selected.length, done: 0, fraction: 0 })
 
     try {
-      const processed = await mapWithConcurrency(selected, CONCURRENCY, (file) =>
-        processFile(file).catch((err) => {
-          console.error('Error processing photo:', err)
-          return null
-        })
-      )
+      // Mint upload slots while photos process — the request only needs a count,
+      // and unconfirmed slots simply expire
+      const uploadsPromise = requestUploads(profileJwt, selected.length)
+
+      const processed = await mapWithConcurrency(selected, CONCURRENCY, (file, i) => {
+        updateFraction(i, 0.05)
+        return processFile(file)
+          .then((photo) => {
+            updateFraction(i, PROCESS_SHARE)
+            return photo
+          })
+          .catch((err) => {
+            console.error('Error processing photo:', err)
+            return null
+          })
+      })
       const good = processed.filter((p): p is ProcessedPhoto => p !== null)
       if (!good.length) {
         flash('Could not read those photos')
         return
       }
 
-      const { uploads } = await requestUploads(profileJwt, good.length)
+      const { uploads } = await uploadsPromise
 
       const uploaded = await mapWithConcurrency(good, CONCURRENCY, async (photo, i) => {
         const slot = uploads[i]
         try {
-          await putWithProgress(slot.fullUploadUrl, photo.fullBlob, photo.contentType, (f) =>
-            updateFraction(i, f * 0.85)
-          )
-          await putWithProgress(slot.thumbUploadUrl, photo.thumbBlob, photo.contentType, (f) =>
-            updateFraction(i, 0.85 + f * 0.15)
-          )
+          const wFull = photo.fullBlob.size / (photo.fullBlob.size + photo.thumbBlob.size)
+          let fFull = 0
+          let fThumb = 0
+          const report = () =>
+            updateFraction(i, PROCESS_SHARE + (fFull * wFull + fThumb * (1 - wFull)) * (1 - PROCESS_SHARE))
+          await Promise.all([
+            putWithProgress(slot.fullUploadUrl, photo.fullBlob, photo.contentType, (f) => {
+              fFull = f
+              report()
+            }),
+            putWithProgress(slot.thumbUploadUrl, photo.thumbBlob, photo.contentType, (f) => {
+              fThumb = f
+              report()
+            }),
+          ])
           updateFraction(i, 1)
           return { id: slot.id, width: photo.width, height: photo.height }
         } catch (err) {

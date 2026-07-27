@@ -34,7 +34,7 @@ async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
   }
 }
 
-function scaleToEdge(source: ImageBitmap | HTMLImageElement, maxEdge: number): { canvas: HTMLCanvasElement; width: number; height: number } {
+function scaleToEdge(source: ImageBitmap | HTMLImageElement | HTMLCanvasElement, maxEdge: number): { canvas: HTMLCanvasElement; width: number; height: number } {
   const srcW = source.width
   const srcH = source.height
   const scale = Math.min(1, maxEdge / Math.max(srcW, srcH))
@@ -60,14 +60,17 @@ function toJpeg(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
 
 export async function processFile(file: File): Promise<ProcessedPhoto> {
   const bitmap = await loadBitmap(file)
+  let full: ReturnType<typeof scaleToEdge>
   try {
-    const full = scaleToEdge(bitmap, FULL_EDGE)
-    const thumb = scaleToEdge(bitmap, THUMB_EDGE)
-    const [fullBlob, thumbBlob] = await Promise.all([toJpeg(full.canvas, 0.82), toJpeg(thumb.canvas, 0.7)])
-    return { fullBlob, thumbBlob, width: full.width, height: full.height, contentType: 'image/jpeg' }
+    full = scaleToEdge(bitmap, FULL_EDGE)
   } finally {
     if ('close' in bitmap) bitmap.close()
   }
+  // Rescale the thumb from the 2048px canvas, not the multi-megapixel source —
+  // half the expensive resample work, and a gentler downscale ratio to boot
+  const thumb = scaleToEdge(full.canvas, THUMB_EDGE)
+  const [fullBlob, thumbBlob] = await Promise.all([toJpeg(full.canvas, 0.82), toJpeg(thumb.canvas, 0.7)])
+  return { fullBlob, thumbBlob, width: full.width, height: full.height, contentType: 'image/jpeg' }
 }
 
 /**

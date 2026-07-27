@@ -379,36 +379,42 @@ app.post('/api/confirm-uploads', async (c) => {
       return c.json({ error: 'Unauthorized' }, 403)
     }
 
-    const entries: PhotoModel.PhotoInsert[] = []
-    const failed: string[] = []
-    for (const item of requested) {
-      const { id, width, height } = item ?? {}
-      const { fullKey, thumbKey } = photoKeys(String(id))
-      const valid =
-        PHOTO_KEY_RE.test(fullKey) &&
-        Number.isInteger(width) && width > 0 && width <= 10000 &&
-        Number.isInteger(height) && height > 0 && height <= 10000
-      if (!valid) {
-        failed.push(String(id))
-        continue
-      }
-      const [full, thumb] = await Promise.all([
-        c.env.PHOTOS_BUCKET.head(fullKey),
-        c.env.PHOTOS_BUCKET.head(thumbKey),
-      ])
-      if (!full || !thumb) {
-        failed.push(id)
-        continue
-      }
-      entries.push({ id, did, fullKey, thumbKey, contentType: 'image/jpeg', width, height })
-    }
+    const checked = await Promise.all(
+      requested.map(async (item): Promise<{ entry: PhotoModel.PhotoInsert } | { failedId: string }> => {
+        const { id, width, height } = item ?? {}
+        const { fullKey, thumbKey } = photoKeys(String(id))
+        const valid =
+          PHOTO_KEY_RE.test(fullKey) &&
+          Number.isInteger(width) && width > 0 && width <= 10000 &&
+          Number.isInteger(height) && height > 0 && height <= 10000
+        if (!valid) {
+          return { failedId: String(id) }
+        }
+        const [full, thumb] = await Promise.all([
+          c.env.PHOTOS_BUCKET.head(fullKey),
+          c.env.PHOTOS_BUCKET.head(thumbKey),
+        ])
+        if (!full || !thumb) {
+          return { failedId: id }
+        }
+        return { entry: { id, did, fullKey, thumbKey, contentType: 'image/jpeg', width, height } }
+      })
+    )
+    const entries = checked.filter((r): r is { entry: PhotoModel.PhotoInsert } => 'entry' in r).map((r) => r.entry)
+    const failed = checked.filter((r): r is { failedId: string } => 'failedId' in r).map((r) => r.failedId)
 
     const inserted = entries.length ? await PhotoModel.insertPhotos(db, entries) : []
 
+    // Broadcast after responding — the uploader gets its photos from this
+    // response; everyone else can hear about them a beat later
     const uploader = { did, name: user.name, avatar: user.avatar }
-    for (const photo of inserted) {
-      await notifyDO(c, 'photo-added', { ...toPublicPhoto(photo), uploader })
-    }
+    c.executionCtx.waitUntil(
+      (async () => {
+        for (const photo of inserted) {
+          await notifyDO(c, 'photo-added', { ...toPublicPhoto(photo), uploader })
+        }
+      })()
+    )
 
     return c.json({ photos: inserted.map(toPublicPhoto), failed })
   } catch (error) {
