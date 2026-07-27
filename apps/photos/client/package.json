@@ -14,6 +14,7 @@
     "@fontsource/big-shoulders-display": "^5.2.5",
     "@fontsource/hanken-grotesk": "^5.2.5",
     "@fontsource/space-mono": "^5.2.5",
+    "fflate": "^0.8.3",
     "local-first-auth": "^3.0.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.1",

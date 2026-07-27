@@ -5,6 +5,7 @@ import { AdminSection } from '../components/AdminSection'
 import { CampLabel } from '../components/CampLabel'
 import { FilmStrip } from '../components/FilmStrip'
 import { AddShotButton } from '../components/AddShotButton'
+import { DownloadAllButton } from '../components/DownloadAllButton'
 import { UploadTray } from '../components/UploadTray'
 
 export function Home() {
@@ -30,7 +31,10 @@ export function Home() {
 
       {/* Kept outside .advance-in: its animation leaves a transform on that div, which
           would make it the containing block for these position: fixed children. */}
-      <AddShotButton onFiles={startUpload} uploading={batch !== null} />
+      <div className="float-dock">
+        <AddShotButton onFiles={startUpload} uploading={batch !== null} />
+        <DownloadAllButton photos={photos} />
+      </div>
       <UploadTray batch={batch} />
     </>
   )

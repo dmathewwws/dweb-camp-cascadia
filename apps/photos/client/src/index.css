@@ -204,11 +204,6 @@
   flex: none;
 }
 .big-btn.float {
-  position: fixed;
-  left: 50%;
-  bottom: calc(60px + env(safe-area-inset-bottom)); /* clears the footer line below it */
-  transform: translateX(-50%);
-  z-index: 40;
   width: auto;
   padding: 15px 27px;
   border-radius: 999px;
@@ -216,12 +211,24 @@
   box-shadow: 0 0 0 4px rgba(22, 17, 12, 0.62), 0 16px 34px rgba(0, 0, 0, 0.55), 0 0 26px rgba(255, 146, 51, 0.28);
 }
 .big-btn.float:active {
-  transform: translateX(-50%) translateY(1px);
+  transform: translateY(1px);
   box-shadow: 0 0 0 4px rgba(22, 17, 12, 0.62), 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 146, 51, 0.26);
+}
+
+/* Fixed row holding the floating action buttons */
+.float-dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(60px + env(safe-area-inset-bottom)); /* clears the footer line below it */
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 /* Centre on the right-hand content column of the md:grid-cols-2 layout, not the seam */
 @media (min-width: 768px) {
-  .big-btn.float {
+  .float-dock {
     left: 75%;
   }
 }
