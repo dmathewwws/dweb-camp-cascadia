@@ -16,11 +16,11 @@ export interface TagGroup {
 export const TAG_GROUPS: TagGroup[] = [
   {
     label: 'agency & autonomy',
-    tags: ['open source', 'open standards', 'free software licensing', 'interoperability', 'data portability', 'anti-monopolies', 'privacy & encryption'],
+    tags: ['open source', 'open standards & interoperability', 'free software licensing', 'data portability', 'anti-monopolies', 'privacy & encryption'],
   },
   {
     label: 'protocols & data',
-    tags: ['p2p protocols', 'ipfs & storage', 'local-first & crdts', 'blockchains & web3', 'tor', 'decentralized identity'],
+    tags: ['p2p protocols', 'ipfs & storage', 'local-first & crdts', 'blockchains & web3', 'tor', 'decentralized identity', 'web standards'],
   },
   {
     label: 'hardware & repair',
@@ -28,11 +28,11 @@ export const TAG_GROUPS: TagGroup[] = [
   },
   {
     label: 'software & self-hosting',
-    tags: ['linux', 'self-hosting & homelab', 'local-first ai & agents', 'security & threat modeling'],
+    tags: ['linux', 'self-hosting & homelab', 'local-first ai', 'ai & agents', 'cybersecurity & threat modeling'],
   },
   {
     label: 'the social web',
-    tags: ['activitypub & fediverse', 'at protocol & bluesky', 'nostr', 'matrix', 'rss', 'indieweb', 'browsers & web standards'],
+    tags: ['activitypub & fediverse', 'at protocol & bluesky', 'nostr', 'matrix', 'rss', 'indieweb'],
   },
   {
     label: 'shared power',
@@ -72,5 +72,4 @@ export const MAX_INTERESTS = 25
 export const MAX_LINE_LENGTH = 80
 
 export const MAX_HIGHLIGHTS = 3
-// Roomy enough for a sentence plus a URL — highlights may contain inline links
-export const MAX_HIGHLIGHT_LENGTH = 120
+export const MAX_HIGHLIGHT_LENGTH = 180
