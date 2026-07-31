@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocalFirstAuth } from '../hooks/useLocalFirstAuth'
 import { useDirectory, type Camper } from '../hooks/useDirectory'
 import { CamperCard } from '../components/CamperCard'
+import { CampLabel } from '../components/CampLabel'
 import { FilterChips } from '../components/FilterChips'
 import { ProfileSheet } from '../components/ProfileSheet'
 
@@ -22,6 +23,7 @@ export function Directory({ onEdit }: DirectoryProps) {
   return (
     <div className="flex-1 flex flex-col">
       <header className="sticky top-0 z-10 bg-paper/90 backdrop-blur-md px-5 pt-3.5 border-b-[1.5px] border-line">
+        <CampLabel className="mb-2.5" />
         <div className="flex items-center justify-between mb-3">
           <div className="font-display font-bold text-[19px] tracking-tight">Campers Directory</div>
           <button
