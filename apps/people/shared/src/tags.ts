@@ -68,7 +68,7 @@ export const ALL_TAGS: readonly string[] = TAG_GROUPS.flatMap((g) => g.tags)
 export const ALL_TAGS_SET: ReadonlySet<string> = new Set(ALL_TAGS)
 
 export const MIN_INTERESTS = 1
-export const MAX_INTERESTS = 25
+export const MAX_INTERESTS = 80
 export const MAX_LINE_LENGTH = 80
 
 export const MAX_HIGHLIGHTS = 3
